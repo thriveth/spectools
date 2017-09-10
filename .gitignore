@@ -1,2 +1,6 @@
+# Python related files
 __pycache__
 undo
+
+# Sky lines - maybe make its own little repo?
+skylines

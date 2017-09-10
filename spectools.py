@@ -14,7 +14,7 @@ import astropy.units as u
 from helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from linelists import lislines, wlsdict, MWlines
-import skylines.uves_sky_atlas as usa
+import skylines.uves_sky_atlas as usa  # Remove?
 
 class GalaxySpectrum(object):
     """ Insert docstring here.
@@ -44,51 +44,18 @@ class GalaxySpectrum(object):
             else:
                 raise KeyError("No flux column recognized from name")
 
-
     def set_units(self, units=None):
         set_units(self.datatable, units=units)
 
-    # TODO: Remove this method, use SpecView instead.
-    def plot_data(self, xspace='wave', refwave=None, errors=False, ax=None,
-                  **kwargs):
-        """Docstring goes here"""
-        if xspace.startswith('vel') & (refwave is None):
-            print(
-                "Reference wave must be given to compute velocities.\nAborting."
-            )
-            return
+    def add_transition(self, transname):
+        t = add_transition(self, transname, ref_transition)
+        return t
 
-        xspaces = {'wave': self.wave, 'freq': self.frequency,
-                   'velocity': self.velocity(refwave)}
-
-        xvals = xspaces[xspace]
-
-        if ax is None:
-            fig, ax = plt.subplots(1)
-
-        ax.plot(
-            xvals, self.datatable['flux'],
-            drawstyle='steps-mid',
-            color='black',
-            linewidth=1.5,
-        )
-
-        if errors:
-            ax.plot(
-                xvals, self.datatable['noise'],
-                drawstyle='steps-mid',
-                color='lightgray',
-                zorder=0,
-                linewidth=1.5,
-            )
-        ax.axhline(0, color='black', linestyle='--')
-
-    # def show_transitions(self, kind='both', ax=None):
-    #     """Docstring goes here"""
-    #     if ax is None:
-    #         fig, ax = plt.gca()
-    #     # TODO: Finish this.
-    #     return
+    def rebin(self, factor):
+        """ CAUTION - changes the data table of this object."""
+        t = rebin(self.datatable, factor)
+        self.datatable = t
+        print("Data have been rebinned by a factor of {}".format(factor))
 
     def smooth_data(self, width=1):
         return np.convolve(self.data, np.ones(width) / width, mode='same')
@@ -655,6 +622,7 @@ def rebin(table, factor):
     errs_bin = np.sqrt(errs_bin) / factor
     return Table([wave_bin, flux_bin, errs_bin])
 
+
 def plot_lines(spectrum, ax=None, smooth=False, binning=False):
     """This is just automated production of a specific plot,
     nothing generalizable.
@@ -787,6 +755,51 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     if ref_transition is not None:
         t.reference_transition = ref_transition
     galaxy_spectrum.transitions[transname] = t
+    return t
 
 
 
+###==================================================================
+# Retired code, kept here for reference, TODO delete soon-ish!
+
+
+    # def plot_data(self, xspace='wave', refwave=None, errors=False, ax=None,
+    #               **kwargs):
+    #     """Docstring goes here"""
+    #     if xspace.startswith('vel') & (refwave is None):
+    #         print(
+    #             "Reference wave must be given to compute velocities.\nAborting."
+    #         )
+    #         return
+
+    #     xspaces = {'wave': self.wave, 'freq': self.frequency,
+    #                'velocity': self.velocity(refwave)}
+
+    #     xvals = xspaces[xspace]
+
+    #     if ax is None:
+    #         fig, ax = plt.subplots(1)
+
+    #     ax.plot(
+    #         xvals, self.datatable['flux'],
+    #         drawstyle='steps-mid',
+    #         color='black',
+    #         linewidth=1.5,
+    #     )
+
+    #     if errors:
+    #         ax.plot(
+    #             xvals, self.datatable['noise'],
+    #             drawstyle='steps-mid',
+    #             color='lightgray',
+    #             zorder=0,
+    #             linewidth=1.5,
+    #         )
+    #     ax.axhline(0, color='black', linestyle='--')
+
+    # def show_transitions(self, kind='both', ax=None):
+    #     """Docstring goes here"""
+    #     if ax is None:
+    #         fig, ax = plt.gca()
+    #     # TODO: Finish this.
+    #     return

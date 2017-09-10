@@ -14,12 +14,7 @@ import astropy.units as u
 from helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from linelists import lislines, wlsdict, MWlines
-import brewer2mpl as brew
 import skylines.uves_sky_atlas as usa
-
-Paired = brew.get_map('Paired', 'Qualitative', 12)
-
-LyAFromEmis = 4098.25 * u.Angstrom
 
 class GalaxySpectrum(object):
     """ Insert docstring here.

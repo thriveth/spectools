@@ -26,6 +26,7 @@ class GalaxySpectrum(object):
     frequnit = u.kHz
     waveunit = u.Angstrom
     velunit = u.km/u.second
+    dataunit = None
     resolution = None
     transitions = None
     preferred_flux = 'flam'
@@ -47,7 +48,7 @@ class GalaxySpectrum(object):
     def set_units(self, units=None):
         set_units(self.datatable, units=units)
 
-    def add_transition(self, transname):
+    def add_transition(self, transname, ref_transition=None):
         t = add_transition(self, transname, ref_transition)
         return t
 
@@ -115,26 +116,24 @@ class Transition(object):
     while observed properties are given in observed wavelengths. This may be a
     little confusing, but it should have some logic to it, and it works.
     """
+    # Metadata
     name = None
-    vac_wl = None  # *Restframe* wavelength in vacuum
-    air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
+    galaxyname = None
     reference_transition = None
-    wave = None  # Should later become array of *observed* wavelengths.
-    data = None  #  -"-
-    errs = None  #  -"-
     fitted = False
     z = 0
-
-    @property
-    def wave_resampled(self):
-        if self.reference_transition is None:
-            return self.wave
-        else:
-            return self.reference_transition.wave
+    # Base quantities: assumed type is astropy.Quantity
+    # Other quantities are numbers, assuming the relevant units e inherited.
+    mask = None
+    vac_wl = None  # *Restframe* wavelength in vacuum
+    air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
+    wave = None    # Should later become array of *observed* wavelengths.
+    data = None    #  -"- data
+    errs = None    #  -"- errors
 
     @property
     def centroid(self):
-        return self.vac_wl  # Make more smart one day
+        return self.vac_wl.value  # Make more smart one day
 
     @property
     def obs_centroid(self):
@@ -142,11 +141,22 @@ class Transition(object):
 
     @property
     def rest_wave(self):
-        return self.wave / (1+self.z)
+        return self.wavevalue / (1+self.z)
 
     @property
     def velocity(self):
         return wl_to_v(self.wave.value, self.centroid * (1. + self.z))
+
+    @property
+    def wave_resampled(self):
+        if self.reference_transition is None:
+            return self.wave.value
+        else:
+            wave = v_to_wl(
+                self.reference_transition.velocity.value,
+                self.centroid
+            )
+            return wave
 
     @property
     def velocity_resampled(self):
@@ -167,6 +177,46 @@ class Transition(object):
         else:
             raise TypeError(
                 "Parameter `transition` must be of the type Transition")
+    @property
+    def mask_resampled(self):
+        if self.reference_transition is None:
+            return self.data
+        elif isinstance(self.reference_transition, Transition):
+            floatmask = self.mask.astype(float)
+            newfloatmask = np.around(np.interp(
+                self.velocity_resampled, self.velocity, self.floatmask
+            )).astype(bool)
+            return newfloatmask
+        else:
+            raise TypeError(
+                "Attribute `transition` must be of the type Transition")
+
+
+    def plot(self, ax=None, smooth=1, **kwargs):
+        """ Insert docstring
+        """
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        if self.mask is None:
+            mask = np.zeros_like(self.data).astype(bool)
+        else:
+            mask = self.mask
+        invmask = np.invert(mask)
+        data = np.convolve(self.data, np.ones(smooth)/smooth, mode='same')
+        errs = np.convolve(self.errs, np.ones(smooth)/smooth, mode='same')
+        plotdata = np.ma.masked_array(data, mask)
+        invdata = np.ma.masked_array(data, invmask)
+        ploterrs = np.ma.masked_array(errs, mask)
+        inverrs = np.ma.masked_array(errs, invmask)
+        p = ax.plot(
+            self.velocity, plotdata, label=self.name,
+            drawstyle='steps-mid', linestyle='-', **kwargs,
+        )[0]
+        ax.plot(
+            self.velocity, invdata, label='_nolabel',
+            drawstyle='steps-mid', linestyle='--',
+            color=p.get_color()
+        )
 
 
 class SpecView(object):
@@ -521,7 +571,7 @@ class SimpleFitGUI(object):
         mask = np.where((self.galaxy.wave.value > vmin) &
                         (self.galaxy.wave.value < vmax))
         self.idx[mask] = True
-        self.ax.axvspan(vmin, vmax, color='orange', alpha=1.0, zorder=0, picker=True)
+        self.ax.axvspan(vmin, vmax, color='C1', alpha=1.0, zorder=0, picker=True)
         self._fit_and_update()
         self.fitted = True
         self.fig.canvas.draw()
@@ -573,9 +623,9 @@ class SimpleFitGUI(object):
         # are using, for better subclassing later.
         best_fit_eval = self.model_fitted.eval(
             self.model_fitted.params,
-            x=self.transition.wave.value)
-        self.transition.data = self.galaxy.data.value[mask] / best_fit_eval
-        self.transition.errs = self.galaxy.errs.value[mask] / best_fit_eval
+            x=self.transition.wave.value) * self.galaxy.datatable['flux'].unit
+        self.transition.data = self.galaxy.data[mask] / best_fit_eval
+        self.transition.errs = self.galaxy.errs[mask] / best_fit_eval
         self.transition.z = self.galaxy.z
         self.transition.fitted = True
         self.galaxy.transitions[self.transition.name] = self.transition
@@ -608,12 +658,106 @@ class SimpleFitGUI(object):
             print("No fits performed so far")
 
 
+class SimpleMaskGUI(SimpleFitGUI):
+    """ Interactively set map on Transition data.
+    masks being averaged like the rest at resampling.
+
+    (Possibly more flexibility to be added later)
+    """
+    def __init__(self, transition, smooth=6):
+        """
+        Parameters
+        ----------
+        transition : Transition
+            Transition to work on. This must (?) be in the `transitions` dict of
+            the GalaxySpectrum passed to the GUI.
+        smooth : int
+            number of pixels by with to smooth the data for presentation.
+        """
+        self.transition = transition
+        if smooth is None:
+            kernelwidth = 1
+        else:
+            kernelwidth = max(1, smooth)  # Kernel cannot be less than 1.
+        self.kernelwidth = kernelwidth
+        self.data = transition.data#.value
+        self.wave = transition.velocity#.value
+        self.mask = np.zeros_like(
+            self.transition.velocity).astype(bool)
+        self.fig, self.ax = plt.subplots(1)
+        self._build_plot()
+
+    def _onselect(self, vmin, vmax):
+        idx = np.where((self.transition.velocity > vmin) &
+                       (self.transition.velocity < vmax))
+        self.mask[idx] = True
+        self.ax.axvspan(vmin, vmax, color='C2', alpha=0.5, zorder=0)
+        self.fig.canvas.draw()
+
+    def _on_ok_button(self, event):
+        self.transition.mask = self.mask
+        self.ax.patches = []
+        self.ax.lines = []  #.pop()
+        self.transition.plot(self.ax, smooth=self.kernelwidth, color='k')
+
+
+    def _build_plot(self):
+        """ Name should be self explaining. Separated from `__init__` for
+        simplicity, and because I suspected this function could come in handy
+        for debugging and other tinkering purposes later.
+        """
+        self._dataplot = self.ax.plot(
+            self.transition.velocity,
+            self.plotdata, 'k',
+            drawstyle='steps-mid',
+            label=self.transition.name
+        )[0]
+        self.ax.set_xlim(-1500, 1500)
+        self.ax.fill_between(
+            self.transition.velocity,
+            self.transition.errs,#.value,
+            color='gray', alpha=.5
+        )
+        # print(np.median(self.data))
+        self.ax.set_ylim(bottom=0., top=np.median(self.data) * 2.)
+        axshw = self.fig.add_axes([0.92, 0.82, 0.09, 0.06])
+        axclr = self.fig.add_axes([0.92, 0.75, 0.09, 0.06])
+        ax_ok = self.fig.add_axes([0.92, 0.68, 0.09, 0.06])
+        self.shwbu = Button(axshw, 'Print')
+        self.clrbu = Button(axclr, 'Clear')
+        self.ok_bu = Button(ax_ok, 'OK')
+        self.shwbu.on_clicked(self._on_show_button)
+        self.clrbu.on_clicked(self._on_clr_button)
+        self.ok_bu.on_clicked(self._on_ok_button)
+        self.ax.set_title("{} {}".format(
+            self.transition.galaxyname, self.transition.name))
+        s = 'Click and drag to mark ranges to mask out.'# \n \
+        helptext = self.ax.text(
+            .5, .95, s,
+            bbox=dict(
+                fc='white', ec='0.8', alpha=.9, boxstyle='round'
+            ),
+            horizontalalignment='center',
+            verticalalignment='top',
+            transform=self.ax.transAxes
+        )
+        span = np.diff(self.transition.velocity).mean() * 5
+        self.span = SpanSelector(
+            self.ax, self._onselect, 'horizontal', useblit=True, minspan=span,)
+    @property
+    def plotdata(self):
+        pd = np.ma.masked_array(self.data, self.mask)
+        if self.kernelwidth > 1:
+            pd = np.convolve(
+                pd, np.ones(self.kernelwidth)/self.kernelwidth, mode='same')
+        return pd
+
 def rebin(table, factor):
     """ Expects column names "wave", "flux", "noise"
     """
     remainder = len(table) % factor
     if remainder > 0:
-        table = table[:remainder]
+        table = table[:-remainder]
     num_groups = len(table) / factor
     groups = np.arange(num_groups).repeat(factor)
     wave_bin = table['wave'].group_by(groups).groups.aggregate(np.mean)
@@ -749,57 +893,11 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     """
     t = Transition()
     t.name = transname
-    t.vac_wl = MWlines[transname]
+    t.galaxyname = galaxy_spectrum.objname
+    t.vac_wl = MWlines[transname] * galaxy_spectrum.datatable['wave'].unit
     if galaxy_spectrum.transitions is None:
         galaxy_spectrum.transitions = {}
     if ref_transition is not None:
         t.reference_transition = ref_transition
     galaxy_spectrum.transitions[transname] = t
     return t
-
-
-
-###==================================================================
-# Retired code, kept here for reference, TODO delete soon-ish!
-
-
-    # def plot_data(self, xspace='wave', refwave=None, errors=False, ax=None,
-    #               **kwargs):
-    #     """Docstring goes here"""
-    #     if xspace.startswith('vel') & (refwave is None):
-    #         print(
-    #             "Reference wave must be given to compute velocities.\nAborting."
-    #         )
-    #         return
-
-    #     xspaces = {'wave': self.wave, 'freq': self.frequency,
-    #                'velocity': self.velocity(refwave)}
-
-    #     xvals = xspaces[xspace]
-
-    #     if ax is None:
-    #         fig, ax = plt.subplots(1)
-
-    #     ax.plot(
-    #         xvals, self.datatable['flux'],
-    #         drawstyle='steps-mid',
-    #         color='black',
-    #         linewidth=1.5,
-    #     )
-
-    #     if errors:
-    #         ax.plot(
-    #             xvals, self.datatable['noise'],
-    #             drawstyle='steps-mid',
-    #             color='lightgray',
-    #             zorder=0,
-    #             linewidth=1.5,
-    #         )
-    #     ax.axhline(0, color='black', linestyle='--')
-
-    # def show_transitions(self, kind='both', ax=None):
-    #     """Docstring goes here"""
-    #     if ax is None:
-    #         fig, ax = plt.gca()
-    #     # TODO: Finish this.
-    #     return

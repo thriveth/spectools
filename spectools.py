@@ -702,6 +702,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.ax.lines = []  #.pop()
         self.transition.plot(self.ax, smooth=self.kernelwidth, color='k')
 
+
     def _build_plot(self):
         """ Name should be self explaining. Separated from `__init__` for
         simplicity, and because I suspected this function could come in handy

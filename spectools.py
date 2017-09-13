@@ -159,6 +159,10 @@ class Transition(object):
             return wave
 
     @property
+    def thistype(self):
+        return(type(self))
+
+    @property
     def velocity_resampled(self):
         if self.reference_transition is None:
             return self.velocity
@@ -169,28 +173,27 @@ class Transition(object):
     def data_resampled(self):
         if self.reference_transition is None:
             return self.data
-        elif isinstance(self.reference_transition, Transition):
+        else:  # if isinstance(self.reference_transition, Transition):
             newdata = np.interp(
                 self.velocity_resampled, self.velocity, self.data
             )
             return newdata
-        else:
-            raise TypeError(
-                "Parameter `transition` must be of the type Transition")
+        # else:
+        #     raise TypeError(
+        #         "Parameter `transition` must be of the type Transition")
     @property
     def mask_resampled(self):
         if self.reference_transition is None:
             return self.data
-        elif isinstance(self.reference_transition, Transition):
+        else:  # if isinstance(self.reference_transition, Transition):
             floatmask = self.mask.astype(float)
             newfloatmask = np.around(np.interp(
                 self.velocity_resampled, self.velocity, self.floatmask
             )).astype(bool)
             return newfloatmask
-        else:
-            raise TypeError(
-                "Attribute `transition` must be of the type Transition")
-
+        # else:
+        #     raise TypeError(
+        #         "Attribute `transition` must be of the type Transition")
 
     def plot(self, ax=None, smooth=1, **kwargs):
         """ Insert docstring
@@ -198,12 +201,12 @@ class Transition(object):
         if ax is None:
             fig, ax = plt.subplots(1)
         if self.mask is None:
-            mask = np.zeros_like(self.data).astype(bool)
+            mask = np.zeros_like(self.data).astype(bool).value
         else:
             mask = self.mask
         invmask = np.invert(mask)
-        data = np.convolve(self.data, np.ones(smooth)/smooth, mode='same')
-        errs = np.convolve(self.errs, np.ones(smooth)/smooth, mode='same')
+        data = np.convolve(self.data.value, np.ones(smooth)/smooth, mode='same')
+        errs = np.convolve(self.errs.value, np.ones(smooth)/smooth, mode='same')
         plotdata = np.ma.masked_array(data, mask)
         invdata = np.ma.masked_array(data, invmask)
         ploterrs = np.ma.masked_array(errs, mask)
@@ -617,8 +620,8 @@ class SimpleFitGUI(object):
     def _on_ok_button(self, event):
         # Only interested in immediate surroundings
         mask = np.where(
-            (self.galaxy.restwave.value > self.transition.centroid - 10)
-            & (self.galaxy.restwave.value < self.transition.centroid + 10))
+            (self.galaxy.restwave.value > self.transition.centroid - 50)
+            & (self.galaxy.restwave.value < self.transition.centroid + 50))
         # Cut out wavelength range
         self.transition.wave = self.galaxy.wave[mask]
         # Divide by the best-fit model in a way independent of which model we

@@ -177,6 +177,21 @@ class Transition(object):
         else:
             raise TypeError(
                 "Parameter `transition` must be of the type Transition")
+
+    @property
+    def errs_resampled(self):
+        # NB! This does not strictly treat errors correctly, but it is good
+        # enough for our purposed.
+        if self.reference_transition is None:
+            return self.errs
+        elif isinstance(self.reference_transition, Transition):
+            newerrs = np.interp(
+                self.velocity_resampled, self.velocity, self.errs
+            )
+            return newerrs
+        else:
+            raise TypeError(
+                "Parameter `transition` must be of the type Transition")
     @property
     def mask_resampled(self):
         if self.reference_transition is None:
@@ -660,6 +675,7 @@ class SimpleFitGUI(object):
             print("No fits performed so far")
 
 
+
 class SimpleMaskGUI(SimpleFitGUI):
     """ Interactively set map on Transition data.
     masks being averaged like the rest at resampling.
@@ -745,7 +761,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         )
         span = np.diff(self.transition.velocity).mean() * 5
         self.span = SpanSelector(
-            self.ax, self._onselect, 'horizontal', useblit=True, minspan=span,)
+            self.ax, self._onselect, 'horizontal', minspan=span,)
     @property
     def plotdata(self):
         pd = np.ma.masked_array(self.data, self.mask)
@@ -897,6 +913,7 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     t = Transition()
     t.name = transname
     t.galaxyname = galaxy_spectrum.objname
+    t.z = galaxy_spectrum.z if galaxy_spectrum else 0
     t.vac_wl = MWlines[transname] * galaxy_spectrum.datatable['wave'].unit
     if galaxy_spectrum.transitions is None:
         galaxy_spectrum.transitions = {}

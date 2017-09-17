@@ -159,6 +159,10 @@ class Transition(object):
             return wave
 
     @property
+    def thistype(self):
+        return(type(self))
+
+    @property
     def velocity_resampled(self):
         if self.reference_transition is None:
             return self.velocity
@@ -169,14 +173,11 @@ class Transition(object):
     def data_resampled(self):
         if self.reference_transition is None:
             return self.data
-        elif isinstance(self.reference_transition, Transition):
+        else:  # if isinstance(self.reference_transition, Transition):
             newdata = np.interp(
                 self.velocity_resampled, self.velocity, self.data
             )
             return newdata
-        else:
-            raise TypeError(
-                "Parameter `transition` must be of the type Transition")
 
     @property
     def errs_resampled(self):
@@ -184,28 +185,25 @@ class Transition(object):
         # enough for our purposed.
         if self.reference_transition is None:
             return self.errs
-        elif isinstance(self.reference_transition, Transition):
+        else:
             newerrs = np.interp(
                 self.velocity_resampled, self.velocity, self.errs
             )
             return newerrs
-        else:
-            raise TypeError(
-                "Parameter `transition` must be of the type Transition")
+
     @property
     def mask_resampled(self):
         if self.reference_transition is None:
             return self.data
-        elif isinstance(self.reference_transition, Transition):
+        else:  # if isinstance(self.reference_transition, Transition):
             floatmask = self.mask.astype(float)
             newfloatmask = np.around(np.interp(
                 self.velocity_resampled, self.velocity, self.floatmask
             )).astype(bool)
             return newfloatmask
-        else:
-            raise TypeError(
-                "Attribute `transition` must be of the type Transition")
-
+        # else:
+        #     raise TypeError(
+        #         "Attribute `transition` must be of the type Transition")
 
     def plot(self, ax=None, smooth=1, **kwargs):
         """ Insert docstring
@@ -213,12 +211,12 @@ class Transition(object):
         if ax is None:
             fig, ax = plt.subplots(1)
         if self.mask is None:
-            mask = np.zeros_like(self.data).astype(bool)
+            mask = np.zeros_like(self.data).astype(bool).value
         else:
             mask = self.mask
         invmask = np.invert(mask)
-        data = np.convolve(self.data, np.ones(smooth)/smooth, mode='same')
-        errs = np.convolve(self.errs, np.ones(smooth)/smooth, mode='same')
+        data = np.convolve(self.data.value, np.ones(smooth)/smooth, mode='same')
+        errs = np.convolve(self.errs.value, np.ones(smooth)/smooth, mode='same')
         plotdata = np.ma.masked_array(data, mask)
         invdata = np.ma.masked_array(data, invmask)
         ploterrs = np.ma.masked_array(errs, mask)
@@ -632,8 +630,8 @@ class SimpleFitGUI(object):
     def _on_ok_button(self, event):
         # Only interested in immediate surroundings
         mask = np.where(
-            (self.galaxy.restwave.value > self.transition.centroid - 10)
-            & (self.galaxy.restwave.value < self.transition.centroid + 10))
+            (self.galaxy.restwave.value > self.transition.centroid - 50)
+            & (self.galaxy.restwave.value < self.transition.centroid + 50))
         # Cut out wavelength range
         self.transition.wave = self.galaxy.wave[mask]
         # Divide by the best-fit model in a way independent of which model we
@@ -682,7 +680,7 @@ class SimpleMaskGUI(SimpleFitGUI):
 
     (Possibly more flexibility to be added later)
     """
-    def __init__(self, transition, smooth=6):
+    def __init__(self, transition, smooth=6, showlines=True):
         """
         Parameters
         ----------
@@ -704,6 +702,8 @@ class SimpleMaskGUI(SimpleFitGUI):
             self.transition.velocity).astype(bool)
         self.fig, self.ax = plt.subplots(1)
         self._build_plot()
+        if showlines:
+            add_line_markers(self, ls='--')
 
     def _onselect(self, vmin, vmax):
         idx = np.where((self.transition.velocity > vmin) &

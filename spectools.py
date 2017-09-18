@@ -14,7 +14,7 @@ import astropy.units as u
 from helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from linelists import lislines, wlsdict, MWlines
-import skylines.uves_sky_atlas as usa  # Remove?
+#import skylines.uves_sky_atlas as usa  # Remove?
 
 class GalaxySpectrum(object):
     """ Insert docstring here.
@@ -504,6 +504,7 @@ class SimpleFitGUI(object):
             The model to fit to the data. By default a linear function.
         """
         self.galaxy = galaxy
+        self.z = galaxy.z
         if smooth is None:
             kernelwidth = 1
         else:
@@ -691,6 +692,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             number of pixels by with to smooth the data for presentation.
         """
         self.transition = transition
+        self.z = transition.z
         if smooth is None:
             kernelwidth = 1
         else:
@@ -703,7 +705,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.fig, self.ax = plt.subplots(1)
         self._build_plot()
         if showlines:
-            add_line_markers(self, ls='--')
+            add_line_markers(self, ls='--', wave='vel')
 
     def _onselect(self, vmin, vmax):
         idx = np.where((self.transition.velocity > vmin) &
@@ -922,14 +924,28 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     galaxy_spectrum.transitions[transname] = t
     return t
 
-def add_line_markers(view, color1='C0', color2='C2', **kwargs):
+def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
     # First redshifted
     for i in MWlines:
-        p = view.ax.axvline(MWlines[i], color=color1, **kwargs)
-        view.ax.annotate(
-            i+"_MW", (MWlines[i], 0.85), xycoords=('data', 'axes fraction'),
-            color=color1, rotation=270, size='x-small')
-        q = view.ax.axvline(MWlines[i]*(1+view.galaxy.z), color=color2, **kwargs)
-        view.ax.annotate(
-            i, (MWlines[i] * (1+view.galaxy.z), 0.85), xycoords=('data', 'axes fraction'),
-            color=color2, rotation=270, size='x-small')
+        if wave=='wave':
+            gcentroid = MWlines[i] * (1 + view.z)
+            mcentroid = MWlines[i]
+            halfrange = 20 # * u.Angstrom TODO implement quantity
+        else:
+            gcentroid = wl_to_v(
+                MWlines[i]* (1 + view.z), view.transition.obs_centroid)
+            mcentroid = wl_to_v(MWlines[i], view.transition.obs_centroid)
+            halfrange = 10000
+        # print(gcentroid, mcentroid)
+        if ((mcentroid > view.transition.obs_centroid - halfrange)
+            & (mcentroid < view.transition.obs_centroid + halfrange)):
+            p = view.ax.axvline(mcentroid, color=color1, **kwargs)
+            view.ax.annotate(
+                i+"_MW", (mcentroid, 0.85), xycoords=('data', 'axes fraction'),
+                color=color1, rotation=270, size='x-small')
+        if (gcentroid > view.transition.obs_centroid - halfrange) \
+                & (gcentroid < view.transition.obs_centroid + halfrange):
+            q = view.ax.axvline(gcentroid, color=color2, **kwargs)
+            view.ax.annotate(
+                i, (gcentroid, 0.85), xycoords=('data', 'axes fraction'),
+                color=color2, rotation=270, size='x-small')

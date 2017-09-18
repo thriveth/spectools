@@ -1,6 +1,7 @@
 # Python related files
 __pycache__
 undo
+.ropeproject
 
 # Sky lines - maybe make its own little repo?
 skylines

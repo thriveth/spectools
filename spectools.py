@@ -171,7 +171,7 @@ class Transition(object):
 
     @property
     def data_resampled(self):
-        if self.reference_transition is None:
+        if not self.reference_transition:
             return self.data
         else:  # if isinstance(self.reference_transition, Transition):
             newdata = np.interp(
@@ -194,11 +194,11 @@ class Transition(object):
     @property
     def mask_resampled(self):
         if self.reference_transition is None:
-            return self.data
+            return self.mask
         else:  # if isinstance(self.reference_transition, Transition):
             floatmask = self.mask.astype(float)
             newfloatmask = np.around(np.interp(
-                self.velocity_resampled, self.velocity, self.floatmask
+                self.velocity_resampled, self.velocity, floatmask
             )).astype(bool)
             return newfloatmask
         # else:

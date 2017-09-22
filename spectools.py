@@ -14,7 +14,11 @@ import astropy.units as u
 from helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from linelists import lislines, wlsdict, MWlines
-#import skylines.uves_sky_atlas as usa  # Remove?
+
+class BaseGUI(object):
+    def __init__(self):
+        raise NotImplementedError("This class is still a work in progress")
+
 
 class GalaxySpectrum(object):
     """ Insert docstring here.
@@ -121,6 +125,7 @@ class Transition(object):
     galaxyname = None
     reference_transition = None
     fitted = False
+    fitter = None  # Placeholder for fitting result
     z = 0
     # Base quantities: assumed type is astropy.Quantity
     # Other quantities are numbers, assuming the relevant units e inherited.
@@ -644,6 +649,7 @@ class SimpleFitGUI(object):
         self.transition.errs = self.galaxy.errs[mask] / best_fit_eval
         self.transition.z = self.galaxy.z
         self.transition.fitted = True
+        self.transition.fitter = self
         self.galaxy.transitions[self.transition.name] = self.transition
         print(
             "Normalized data saved to Transition {} in spectrum {}".format(
@@ -672,7 +678,6 @@ class SimpleFitGUI(object):
             print(self.model_fitted.fit_report())
         else:
             print("No fits performed so far")
-
 
 
 class SimpleMaskGUI(SimpleFitGUI):
@@ -924,10 +929,11 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     galaxy_spectrum.transitions[transname] = t
     return t
 
+
 def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
-    # First redshifted
+    """Parameter `wave` is assumed to be velocity if not specified as 'wave'"""
     for i in MWlines:
-        if wave=='wave':
+        if wave == 'wave':
             gcentroid = MWlines[i] * (1 + view.z)
             mcentroid = MWlines[i]
             halfrange = 20 # * u.Angstrom TODO implement quantity
@@ -938,14 +944,16 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
             halfrange = 10000
         # print(gcentroid, mcentroid)
         if ((mcentroid > view.transition.obs_centroid - halfrange)
-            & (mcentroid < view.transition.obs_centroid + halfrange)):
-            p = view.ax.axvline(mcentroid, color=color1, **kwargs)
+                & (mcentroid < view.transition.obs_centroid + halfrange)):
+            view.ax.axvline(mcentroid, color=color1, **kwargs)
             view.ax.annotate(
                 i+"_MW", (mcentroid, 0.85), xycoords=('data', 'axes fraction'),
                 color=color1, rotation=270, size='x-small')
         if (gcentroid > view.transition.obs_centroid - halfrange) \
                 & (gcentroid < view.transition.obs_centroid + halfrange):
-            q = view.ax.axvline(gcentroid, color=color2, **kwargs)
+            view.ax.axvline(gcentroid, color=color2, **kwargs)
             view.ax.annotate(
                 i, (gcentroid, 0.85), xycoords=('data', 'axes fraction'),
                 color=color2, rotation=270, size='x-small')
+
+

@@ -287,12 +287,10 @@ class SpecView(object):
             for l in self._sky_lines:
                 l.set_visible(False)
             self.skylines_visible = False
-
         elif self._sky_lines is not None:
             for l in self._sky_lines:
                 l.set_visible(True)
             self.skylines_visible = True
-
         else:
             print("Building sky line plot...")
             self._sky_lines = []
@@ -306,6 +304,7 @@ class SpecView(object):
                         ll = self.ax.axvline(l['CENTER'], color=color)
                         self._sky_lines.append(ll)
             self.skylines_visible = True
+
     def toggle_errors(self):
         if self.errplot is None:
             self.errplot = self.ax.plot(
@@ -321,7 +320,6 @@ class SpecView(object):
             self.errplot.remove()
             self.errplot = None
             #plt.draw()
-
 
     def toggle_restframe_xaxis(self):
         if self.altaxis_type == 'restframe':
@@ -374,7 +372,6 @@ class SpecView(object):
             altx.set_xlim(self.vel_lims.value)
             altx.set_xlabel(self.spectrum.velunit)
             self.altaxis_type = 'vel'
-
 
     def toggle_metal_absorption(self):
         # If already drawn and visible, hide.
@@ -939,7 +936,8 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
             halfrange = 20 # * u.Angstrom TODO implement quantity
         else:
             gcentroid = wl_to_v(
-                MWlines[i]* (1 + view.z), view.transition.obs_centroid)
+                MWlines[i]* (1 + view.z), view.transition.obs_centroid
+            )
             mcentroid = wl_to_v(MWlines[i], view.transition.obs_centroid)
             halfrange = 10000
         # print(gcentroid, mcentroid)
@@ -955,5 +953,6 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
             view.ax.annotate(
                 i, (gcentroid, 0.85), xycoords=('data', 'axes fraction'),
                 color=color2, rotation=270, size='x-small')
+    return view
 
 

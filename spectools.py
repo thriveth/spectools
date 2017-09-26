@@ -31,7 +31,7 @@ class GalaxySpectrum(object):
     waveunit = u.Angstrom
     velunit = u.km/u.second
     dataunit = None
-    resolution = None
+    resolution = None  # TODO Not used yet, remove?
     transitions = None
     preferred_flux = 'flam'
 
@@ -210,7 +210,7 @@ class Transition(object):
         #     raise TypeError(
         #         "Attribute `transition` must be of the type Transition")
 
-    def plot(self, ax=None, smooth=1, **kwargs):
+    def plot(self, ax=None, smooth=1, maskalpha=1, showmasked=True, **kwargs):
         """ Insert docstring
         """
         if ax is None:
@@ -230,11 +230,12 @@ class Transition(object):
             self.velocity, plotdata, label=self.name,
             drawstyle='steps-mid', linestyle='-', **kwargs,
         )[0]
-        ax.plot(
-            self.velocity, invdata, label='_nolabel',
-            drawstyle='steps-mid', linestyle='--',
-            color=p.get_color()
-        )
+        if showmasked:
+            ax.plot(
+                self.velocity, invdata, label='_nolabel',
+                drawstyle='steps-mid', linestyle='--',
+                color=p.get_color(), alpha=maskalpha
+            )
 
 
 class SpecView(object):

@@ -128,53 +128,62 @@ def dynvelplot(indict, ax=None, plotiters=True, color1='black', color2='C0'):
         iterations = max(indict['iterations'], 500)
         for i in np.arange(iterations):
             ax2.plot(vels, indict['cumsum'][i, :], color=color1, ls='-', lw=0.1, alpha=.2)
-            ax.plot(vels, 1-indict['perturbed'][i, :], color=color2, ls='-', lw=0.1, alpha=.2)
+            #ax.plot(vels, 1-indict['perturbed'][i, :], color=color2, ls='-', lw=0.1, alpha=.2)
     accuplot = ax2.plot(vels, indict['cumsum'][0, :], '-', color='m', lw=1.8, label='Accumulated absorption', )
-    fluxplot = ax.plot(vels, 1-indict['perturbed'][0, :], 'c-', lw=1.8, label='Line flux', )
+    fluxplot = ax.plot(vels, 1-indict['perturbed'][0, :], 'c-', lw=1.8, label='Line flux', drawstyle='steps-mid')
+    flerrs = ax.fill_between(
+        vels,
+        1 - indict['perturbed'][0, :] - indict['perturbed'].std(0),
+        1 - indict['perturbed'][0, :] + indict['perturbed'].std(0),
+        color='C0',
+        alpha=.5,
+        zorder=0,
+        step='mid'
+    )
     ax.axvline(0, color='k', ls=':')
     ax.axhline(1, color='k', ls=':')
     ax.axhline(0, color='k', ls='--')
     ax.axvline(indict['v5pct']['ml'], color='darkgray', ls='--')
-    ax.axvspan(
-        indict['v5pct']['ml']-indict['v5pct']['stddev'],
-        indict['v5pct']['ml'] + indict['v5pct']['stddev'],
-        facecolor='lightgray', edgecolor='darkgray', alpha=.5, zorder=0,
-    )
+    #ax.axvspan(
+    #    indict['v5pct']['ml']-indict['v5pct']['stddev'],
+    #    indict['v5pct']['ml'] + indict['v5pct']['stddev'],
+    #    facecolor='lightgray', edgecolor='darkgray', alpha=.5, zorder=0,
+    #)
     ax.axvline(
         indict['v95']['ml'],
         indict['v95']['mean'],
         color='darkgray', ls='--'
     )
-    ax.axvspan(
-        indict['v95']['ml']-indict['v95']['stddev'],
-        indict['v95']['ml'] + indict['v95']['stddev'],
-        facecolor='lightgray', edgecolor='darkgray',
-        alpha=.5, zorder=0,
-    )
+    #ax.axvspan(
+    #    indict['v95']['ml']-indict['v95']['stddev'],
+    #    indict['v95']['ml'] + indict['v95']['stddev'],
+    #    facecolor='lightgray', edgecolor='darkgray',
+    #    alpha=.5, zorder=0,
+    #)
     ax.axvline(
         indict['vint']['ml'],
         indict['vint']['mean'],
         color='darkgray',
         ls='--'
     )
-    ax.axvspan(
-        indict['vint']['ml'] - indict['vint']['stddev'],
-        indict['vint']['ml'] + indict['vint']['stddev'],
-        facecolor='lightgray',
-        edgecolor='darkgray',
-        alpha=.5, zorder=0,
-    )
+    # ax.axvspan(
+    #     indict['vint']['ml'] - indict['vint']['stddev'],
+    #     indict['vint']['ml'] + indict['vint']['stddev'],
+    #     facecolor='lightgray',
+    #     edgecolor='darkgray',
+    #     alpha=.5, zorder=0,
+    # )
     ax.axvline(
         indict['vmin']['ml'],
         indict['vmin']['mean'],
         color='darkgray', ls='--'
     )
-    ax.axvspan(
-        indict['vmin']['ml']-indict['vmin']['stddev'],
-        indict['vmin']['ml'] + indict['vmin']['stddev'],
-        facecolor='lightgray', edgecolor='darkgray',
-        alpha=.5, zorder=0,
-    )
+    # ax.axvspan(
+    #     indict['vmin']['ml']-indict['vmin']['stddev'],
+    #     indict['vmin']['ml'] + indict['vmin']['stddev'],
+    #     facecolor='lightgray', edgecolor='darkgray',
+    #     alpha=.5, zorder=0,
+    # )
 
     ax2.set_ylim(ax.get_ylim())
     ax.tick_params(axis='y', labelcolor=color2)

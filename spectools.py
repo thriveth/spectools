@@ -11,9 +11,9 @@ from astropy.modeling import fitting, models
 import lmfit as lm
 import astropy.constants as c
 import astropy.units as u
-from helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
+from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
-from linelists import lislines, wlsdict, MWlines
+from spectools.linelists import lislines, wlsdict, MWlines
 
 class BaseGUI(object):
     def __init__(self):
@@ -206,9 +206,6 @@ class Transition(object):
                 self.velocity_resampled, self.velocity, floatmask
             )).astype(bool)
             return newfloatmask
-        # else:
-        #     raise TypeError(
-        #         "Attribute `transition` must be of the type Transition")
 
     def plot(self, ax=None, smooth=1, maskalpha=1, showmasked=True, **kwargs):
         """ Insert docstring
@@ -236,6 +233,7 @@ class Transition(object):
                 drawstyle='steps-mid', linestyle='--',
                 color=p.get_color(), alpha=maskalpha
             )
+        return p
 
 
 class SpecView(object):
@@ -934,13 +932,13 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
         if wave == 'wave':
             gcentroid = MWlines[i] * (1 + view.z)
             mcentroid = MWlines[i]
-            halfrange = 20 # * u.Angstrom TODO implement quantity
+            halfrange = 50 # * u.Angstrom TODO implement quantity
         else:
             gcentroid = wl_to_v(
                 MWlines[i]* (1 + view.z), view.transition.obs_centroid
             )
             mcentroid = wl_to_v(MWlines[i], view.transition.obs_centroid)
-            halfrange = 10000
+            halfrange = 20000
         # print(gcentroid, mcentroid)
         if ((mcentroid > view.transition.obs_centroid - halfrange)
                 & (mcentroid < view.transition.obs_centroid + halfrange)):

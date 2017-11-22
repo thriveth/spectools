@@ -382,7 +382,7 @@ class SpecView(object):
         # If not drawn (and consequentially not visible), draw and set visible:
         elif self._metal_absorption is None:
             print("Populating absorption line list...")
-            from linelists import MWlines
+            # from linelists import MWlines
             self._metal_absorption = {}
             self._metal_annotations = {}
             for absln in MWlines.keys():

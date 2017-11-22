@@ -9,12 +9,4 @@ setup(
     author_email='eriveth@uio.no',
     packages=['spectools'],
     license='GPL3',
-    install_requires=[
-        'numpy',
-        'scipy',
-        'pandas',
-        'matplotlib',
-        'astropy',
-        'lmfit',
-    ]
 )

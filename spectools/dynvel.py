@@ -72,6 +72,7 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb'):
     minvel = {
         'ml':minvels[0],
         'mean':minvels[1:].mean(),
+        'percentiles': np.percentile(minvels[1:], [2.5, 16, 50, 84, 97.5]),
         'stddev':minvels[1:].std()
     }
     fivevel = {
@@ -79,36 +80,40 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb'):
         'mean': fivevels[1:].mean(),
         'stddev': fivevels[1:].std(),
         'percentiles': np.percentile(fivevels[1:], [2.5, 16, 50, 84, 97.5]),
-        'realizations': fivevels,
+        #'realizations': fivevels,
     }
     fiftyvel = {
         'ml': fiftyvels[0],
         'mean': fiftyvels[1:].mean(),
+        'percentiles': np.percentile(fiftyvels[1:], [2.5, 16, 50, 84, 97.5]),
         'stddev':fiftyvels[1:].std()
     }
     ninetyfivevel = {
         'ml': ninetyfivevels[0],
         'mean': ninetyfivevels.mean(),
+        'percentiles': np.percentile(ninetyfivevels[1:],
+                                     [2.5, 16, 50, 84, 97.5]),
         'stddev': ninetyfivevels.std()
     }
     w90vel = {
         'ml':  w90vels[0],
         'mean': w90vels.mean(),
+        'percentiles': np.percentile(w90vels[1:], [2.5, 16, 50, 84, 97.5]),
         'stddev': w90vels.std(),
     }
     EW = {
         'ml': EWs[0],
         'mean': EWs[1:].mean(),
         'percentiles': np.percentile(EWs[1:], [2.5, 16, 50, 84, 97.5]),
-        'realizations': EWs,
+        #'realizations': EWs,
     }
     outdict = {
         'EW': EW,
         'iterations':iterations,
         'vmin': minvel,
-        'v5pct': fivevel,
+        'v5pct': ninetyfivevel,
         'vint': fiftyvel,
-        'v95': ninetyfivevel,
+        'v95': fivevel,
         'w90': w90vel,
         'accu': accu[0, :],
         'perturbed': pertdata,

@@ -372,7 +372,7 @@ class SpecView(object):
             altx.set_xlabel(self.spectrum.velunit)
             self.altaxis_type = 'vel'
 
-    def toggle_metal_absorption(self):
+    def toggle_metal_absorption(self, col1='C0', col2='C1'):
         # If already drawn and visible, hide.
         if self._absorption_visible:
             for absln in self._metal_absorption.keys():

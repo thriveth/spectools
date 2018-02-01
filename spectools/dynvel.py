@@ -52,6 +52,7 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb'):
     fifty = np.absolute(accu - 0.5).argmin(axis=1)
     ninetyfive = np.absolute(accu - 0.95).argmin(axis=1)
     mins = pertdata.argmax(axis=1)
+    imins = (1 - pertdata).min(axis=1)
     fivevels = np.array(
         [waves[i, five[i]] for i in np.arange(waves.shape[0])]
     )
@@ -101,15 +102,15 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb'):
         'percentiles': np.percentile(w90vels[1:], [2.5, 16, 50, 84, 97.5]),
         'stddev': w90vels.std(),
     }
-    EW = {
-        'ml': EWs[0],
-        'mean': EWs[1:].mean(),
-        'percentiles': np.percentile(EWs[1:], [2.5, 16, 50, 84, 97.5]),
-        #'realizations': EWs,
+    imin = {
+        'ml': imins[0],
+        'mean': imins[1:].mean(),
+        'percentiles': np.percentile(imins[1:], [2.5, 16, 50, 84, 97.5]),
     }
     outdict = {
-        'EW': EW,
+        # 'EW': EW,
         'iterations':iterations,
+        'imin': imin,
         'vmin': minvel,
         'v5pct': ninetyfivevel,
         'vint': fiftyvel,

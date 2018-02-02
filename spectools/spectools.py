@@ -741,7 +741,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             color='gray', alpha=.5
         )
         # print(np.median(self.data))
-        self.ax.axhline(1, color='k', ls='--', ls=.8)
+        self.ax.axhline(1, color='k', ls='--', lw=.8)
         self.ax.set_ylim(bottom=0., top=np.median(self.data) * 2.)
         axshw = self.fig.add_axes([0.91, 0.82, 0.08, 0.06])
         axclr = self.fig.add_axes([0.91, 0.75, 0.08, 0.06])

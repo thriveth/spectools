@@ -34,6 +34,8 @@ SDSSlines = sp.array(  # Air wavelengths
 )
 
 MWlines = {
+    'Ly $\alpha$': 1215.6700,
+    'Ly $\beta$': 1025.7222,
     'C I 1157': 1157.1857,
     'C II 1334': 1334.53,
     'C II* 1336': 1335.7077,  # C II  E1 2Po-2D  3/2 - 5/2 2.87E+08 1.15E-01    24     63.42 -  74930.10 ASD

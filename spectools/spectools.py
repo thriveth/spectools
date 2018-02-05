@@ -579,7 +579,7 @@ class SimpleFitGUI(SpecView):
         )
         xlow, xup = self.centroid - 10 * (1+self.z), \
             self.centroid + 10 * (1+self.z)
-        self.ax.set_xlim(self.centroid-10, self.centroid+10)
+        self.ax.set_xlim(xlow, xup)
         self.ax.fill_between(
             self.galaxy.wave.value,
             self.galaxy.errs.data,

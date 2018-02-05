@@ -239,6 +239,16 @@ class Transition(object):
 class SpecView(object):
     """ Docstring goes here.
     """
+
+    alt_xaxis = None
+    altaxis_type = None
+    skyatlas = None
+    skylines_visible = False
+    _metal_absorption = None
+    _absorption_visible = False
+    _sky_lines = None
+    _sky_flux_limit = 1  # Sane default
+
     def __init__(self, galaxy, ax=None, data=None, label='Data'):
         self.data = galaxy.datatable
         self.galaxy = galaxy
@@ -258,14 +268,14 @@ class SpecView(object):
         ax.set_xlabel(self.data['wave'].unit)
         self._smooth_width = 1  # No smoothing by default
         self.ax = ax
-        self.alt_xaxis = None
-        self.altaxis_type = None
-        self.skyatlas = None
-        self.skylines_visible = False
-        self._metal_absorption = None
-        self._absorption_visible = False
-        self._sky_lines = None
-        self._sky_flux_limit = 1  # Sane default
+        # self.alt_xaxis = None
+        # self.altaxis_type = None
+        # self.skyatlas = None
+        # self.skylines_visible = False
+        # self._metal_absorption = None
+        # self._absorption_visible = False
+        # self._sky_lines = None
+        # self._sky_flux_limit = 1  # Sane default
 
     def toggle_sky_lines(self, min_flux=1):
         if min_flux != self._sky_flux_limit:  # Rebuild if new value passed

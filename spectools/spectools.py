@@ -239,9 +239,9 @@ class Transition(object):
 class SpecView(object):
     """ Docstring goes here.
     """
-    def __init__(self, spectrum, ax=None, data=None, label='Data'):
-        self.data = spectrum.datatable
-        self.spectrum = spectrum
+    def __init__(self, galaxy, ax=None, data=None, label='Data'):
+        self.data = galaxy.datatable
+        self.galaxy = galaxy
         self.ref_wl = None
         if ax is None:
             fig, ax = plt.subplots(1)
@@ -333,7 +333,7 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.restwave_lims.value)
-            altx.set_xlabel('Restframe $\lambda$ [{}]'.format(self.spectrum.waveunit))
+            altx.set_xlabel('Restframe $\lambda$ [{}]'.format(self.galaxy.waveunit))
             self.altaxis_type = 'restframe'
 
     def toggle_frequency_xaxis(self):
@@ -349,7 +349,7 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.freq_lims.value)
-            altx.set_xlabel(self.spectrum.frequnit)
+            altx.set_xlabel(self.galaxy.frequnit)
             self.altaxis_type = 'freq'
 
     def toggle_velocity_xaxis(self):
@@ -369,7 +369,7 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.vel_lims.value)
-            altx.set_xlabel(self.spectrum.velunit)
+            altx.set_xlabel(self.galaxy.velunit)
             self.altaxis_type = 'vel'
 
     def toggle_metal_absorption(self, col1='C0', col2='C1'):
@@ -387,18 +387,18 @@ class SpecView(object):
             self._metal_annotations = {}
             for absln in MWlines.keys():
                 control_waverange = \
-                    ((MWlines[absln] * (1.+self.spectrum.z) > self.spectrum.wave.value.min()) &
-                     (MWlines[absln] * (1.+self.spectrum.z) < self.spectrum.wave.value.max()))
+                    ((MWlines[absln] * (1.+self.galaxy.z) > self.galaxy.wave.value.min()) &
+                     (MWlines[absln] * (1.+self.galaxy.z) < self.galaxy.wave.value.max()))
                 if not control_waverange:
                     continue
                 self._metal_absorption[absln] = self.ax.axvline(
-                    MWlines[absln] * (1. + self.spectrum.z),
+                    MWlines[absln] * (1. + self.galaxy.z),
                     color='lightgray',
                     linestyle=':'
                 )
                 self._metal_annotations[absln] = self.ax.annotate(
                     absln,
-                    xy=(MWlines[absln] * (1 + self.spectrum.z), 0.85),
+                    xy=(MWlines[absln] * (1 + self.galaxy.z), 0.85),
                     xycoords=('data', 'axes fraction'),
                     color='gray',
                     backgroundcolor='w',
@@ -428,12 +428,12 @@ class SpecView(object):
         width = max(round(width), 1)
         self.dataplot.set_data(
             self.dataplot.get_data()[0],
-            self.spectrum.smooth_data(width)
+            self.galaxy.smooth_data(width)
         )
         if self.errplot is not None:
             self.errplot.set_data(
                 self.errplot.get_data()[0],
-                self.spectrum.smooth_errs(width)
+                self.galaxy.smooth_errs(width)
             )
 
 
@@ -441,7 +441,7 @@ class SpecView(object):
     def freq_lims(self):
         out = (
             c.c / (self.ax.get_xbound() * self.data['wave'].unit)
-        ).to(self.spectrum.frequnit)
+        ).to(self.galaxy.frequnit)
         #print(out)
         self.altx.set_xlim(out.value)#[0], out[1])
         return out
@@ -449,9 +449,9 @@ class SpecView(object):
     @property
     def restwave_lims(self):
         wave = (
-            np.array(self.ax.get_xbound()) * self.spectrum.waveunit
+            np.array(self.ax.get_xbound()) * self.galaxy.waveunit
         ).to(u.Angstrom)
-        restwave = wave / (1 + self.spectrum.z)
+        restwave = wave / (1 + self.galaxy.z)
         self.altx.set_xlim(restwave.value)
         return restwave
 
@@ -459,12 +459,12 @@ class SpecView(object):
     def vel_lims(self):
         ref_wl = self.ref_wl
         wave = (
-            np.array(self.ax.get_xbound()) * self.spectrum.waveunit
+            np.array(self.ax.get_xbound()) * self.galaxy.waveunit
         ).to(u.Angstrom)
-        ref_wl = (ref_wl * self.spectrum.waveunit).to(u.Angstrom)
+        ref_wl = (ref_wl * self.galaxy.waveunit).to(u.Angstrom)
         out = (
             wl_to_v(wave, ref_wl) * (u.km / u.second)
-        ).to(self.spectrum.velunit)
+        ).to(self.galaxy.velunit)
         self.altx.set_xlim(out.value)
         return out
 
@@ -589,7 +589,8 @@ class SimpleFitGUI(object):
         mask = np.where((self.galaxy.wave.value > vmin) &
                         (self.galaxy.wave.value < vmax))
         self.idx[mask] = True
-        self.ax.axvspan(vmin, vmax, color='C1', alpha=1.0, zorder=0, picker=True)
+        self.spans = self.ax.axvspan(
+            vmin, vmax, color='C1', alpha=1.0, zorder=0, picker=True)
         self._fit_and_update()
         self.fitted = True
         self.fig.canvas.draw()
@@ -647,6 +648,7 @@ class SimpleFitGUI(object):
         self.transition.z = self.galaxy.z
         self.transition.fitted = True
         self.transition.fitter = self
+        self.spans.set_color('#FBB117')
         self.galaxy.transitions[self.transition.name] = self.transition
         print(
             "Normalized data saved to Transition {} in spectrum {}".format(

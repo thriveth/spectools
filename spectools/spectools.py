@@ -469,7 +469,7 @@ class SpecView(object):
         return out
 
 
-class SimpleFitGUI(object):
+class SimpleFitGUI(SpecView):
     """ Simple interactive GUI for fitting a model to a 1D spectrum.
     By default, the model is a linear one, but any lmfit.Model object can be
     passed (still needs testing though).
@@ -540,6 +540,8 @@ class SimpleFitGUI(object):
             drawstyle='steps-mid',
             label=self.transition.name
         )
+        xlow, xup = self.centroid - 10 * (1+self.z), \
+            self.centroid + 10 * (1+self.z)
         self.ax.set_xlim(self.centroid-10, self.centroid+10)
         self.ax.fill_between(
             self.galaxy.wave.value,
@@ -584,7 +586,7 @@ class SimpleFitGUI(object):
 
     def _onselect(self, vmin, vmax):
         ###============================================
-        # Set everything between vmin and vmax to True.
+            # Set everything between vmin and vmax to True.
         ###============================================
         mask = np.where((self.galaxy.wave.value > vmin) &
                         (self.galaxy.wave.value < vmax))
@@ -950,13 +952,15 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
             view.ax.axvline(mcentroid, color=color1, **kwargs)
             view.ax.annotate(
                 i+"_MW", (mcentroid, 0.85), xycoords=('data', 'axes fraction'),
-                color=color1, rotation=270, size='x-small')
+                color=color1, rotation=270, size='x-small',
+                annotation_clip=True)
         if (gcentroid > view.transition.obs_centroid - halfrange) \
                 & (gcentroid < view.transition.obs_centroid + halfrange):
             view.ax.axvline(gcentroid, color=color2, **kwargs)
             view.ax.annotate(
                 i, (gcentroid, 0.85), xycoords=('data', 'axes fraction'),
-                color=color2, rotation=270, size='x-small')
+                color=color2, rotation=270, size='x-small',
+                annotation_clip=True)
     return view
 
 

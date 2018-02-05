@@ -413,6 +413,7 @@ class SpecView(object):
                     color='gray',
                     backgroundcolor='w',
                     rotation=90,
+                    annotation_clip=True,
                 )
                 self._absorption_visible = True
         # If already drawn, but hidden, set to visible:
@@ -538,7 +539,8 @@ class SimpleFitGUI(SpecView):
         self.fig, self.ax = plt.subplots(1)
         self._build_plot()
         if show_lines:
-            add_line_markers(self, ls='--')
+            self.toggle_metal_absorption()
+            #add_line_markers(self, ls='--')
 
     def _build_plot(self):
         """ Name should be self explaining. Separated from `__init__` for

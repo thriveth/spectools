@@ -607,7 +607,7 @@ class SimpleFitGUI(SpecView):
         helptext = self.ax.text(
             .5, .95, s,
             bbox=dict(
-                fc='white', ec='0.8', alpha=.9, boxstyle='round'
+                fc='0.9', ec='0.8', alpha=.9, boxstyle='round'
             ),
             horizontalalignment='center',
             verticalalignment='top',

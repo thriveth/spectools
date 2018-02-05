@@ -602,7 +602,10 @@ class SimpleFitGUI(SpecView):
                 x=self.centroid, linestyle='--', color='gray', alpha=.6, lw=1.5)
         # if self.transition is not None:
         #     self.ax.legend(loc='lower left')
-        self.ax.set_title("{} {}".format(self.galaxy.objname, self.transition.name))
+        self.ax.annotate(
+            "{} {}".format(self.galaxy.objname, self.transition.name),
+            (0.1, 0.1), xycoords='axes fraction',
+        )
         s = 'Click and drag to mark ranges to include in fit.'# \n \
         helptext = self.ax.text(
             .5, .95, s,

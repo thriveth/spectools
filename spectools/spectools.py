@@ -418,8 +418,8 @@ class SpecView(object):
                     annotation_clip=True,
                 )
                 control_waverange_MW = \
-                    ((MWlines[absln_MW] > self.galaxy.wave.value.min()) &
-                     (MWlines[absln_MW] < self.galaxy.wave.value.max()))
+                    ((MWlines[absln] > self.galaxy.wave.value.min()) &
+                     (MWlines[absln] < self.galaxy.wave.value.max()))
                 if not control_waverange_MW:
                     continue
                 self._metal_absorption[absln+'_MW'] = self.ax.axvline(
@@ -441,9 +441,11 @@ class SpecView(object):
             self._absorption_visible = True
         # If already drawn, but hidden, set to visible:
         else:
-            for absln in self._metal_absorption.keys():
+            for absln in self._metal_absorption():
                 self._metal_absorption[absln].set_visible(True)
                 self._metal_annotations[absln].set_visible(True)
+                # self._metal_absorption[absln+'_MW'].set_visible(True)
+                # self._metal_annotations[absln+'_MW'].set_visible(True)
                 self._absorption_visible = True
         return
 

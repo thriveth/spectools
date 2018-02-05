@@ -648,7 +648,8 @@ class SimpleFitGUI(object):
         self.transition.z = self.galaxy.z
         self.transition.fitted = True
         self.transition.fitter = self
-        self.spans.set_color('#FBB117')
+        for spans in self.ax.patches:
+            spans.set_color('#FBB117')
         self.galaxy.transitions[self.transition.name] = self.transition
         print(
             "Normalized data saved to Transition {} in spectrum {}".format(

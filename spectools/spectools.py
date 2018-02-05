@@ -382,7 +382,7 @@ class SpecView(object):
             altx.set_xlabel(self.galaxy.velunit)
             self.altaxis_type = 'vel'
 
-    def toggle_metal_absorption(self, col1='C0', col2='C1'):
+    def toggle_metal_absorption(self, col1='C0', col2='C2'):
         # If already drawn and visible, hide.
         if self._absorption_visible:
             for absln in self._metal_absorption.keys():
@@ -403,19 +403,42 @@ class SpecView(object):
                     continue
                 self._metal_absorption[absln] = self.ax.axvline(
                     MWlines[absln] * (1. + self.galaxy.z),
-                    color='lightgray',
+                    #color='lightgray',
+                    color=col1,
                     linestyle=':'
                 )
                 self._metal_annotations[absln] = self.ax.annotate(
                     absln,
                     xy=(MWlines[absln] * (1 + self.galaxy.z), 0.85),
                     xycoords=('data', 'axes fraction'),
-                    color='gray',
+                    #color='gray',
+                    color=col1,
                     backgroundcolor='w',
                     rotation=90,
                     annotation_clip=True,
                 )
-                self._absorption_visible = True
+                control_waverange_MW = \
+                    ((MWlines[absln_MW] > self.galaxy.wave.value.min()) &
+                     (MWlines[absln_MW] < self.galaxy.wave.value.max()))
+                if not control_waverange_MW:
+                    continue
+                self._metal_absorption[absln+'_MW'] = self.ax.axvline(
+                    MWlines[absln],
+                    # color='lightgray',
+                    color=col2,
+                    linestyle=':',
+                )
+                self._metal_annotations[absln+'_MW'] = self.ax.annotate(
+                    absln+' MW',
+                    xy=(MWlines[absln], 0.85),
+                    xycoords=('data', 'axes fraction'),
+                    #color='gray',
+                    color=col2,
+                    backgroundcolor='w',
+                    rotation=90,
+                    annotation_clip=True,
+                )
+            self._absorption_visible = True
         # If already drawn, but hidden, set to visible:
         else:
             for absln in self._metal_absorption.keys():

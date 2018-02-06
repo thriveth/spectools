@@ -337,7 +337,7 @@ class SpecView(object):
             altx.set_xlim(self.restwave_lims.value)
             altx.set_xlabel(
                 '{} Restframe $\lambda$ [{}]'.format(
-                    self.galaxy.galaxyname, self.galaxy.waveunit))
+                    self.galaxy.objname, self.galaxy.waveunit))
             self.altaxis_type = 'restframe'
 
     def toggle_frequency_xaxis(self):
@@ -355,7 +355,7 @@ class SpecView(object):
             altx.set_xlim(self.freq_lims.value)
             altx.set_xlabel(
                 '{} frequency [{}]'.format(
-                    self.galaxy.galaxyname, self.galaxy.frequnit))
+                    self.galaxy.objname, self.galaxy.frequnit))
             self.altaxis_type = 'freq'
 
     def toggle_velocity_xaxis(self):
@@ -381,7 +381,7 @@ class SpecView(object):
             altx.set_xlim(self.vel_lims.value)
             altx.set_xlabel(
                 '{} Velocity [{}]'.format(
-                    self.galaxy.galaxyname, self.galaxy.velunit))
+                    self.galaxy.objname, self.galaxy.velunit))
             self.altaxis_type = 'vel'
 
     def toggle_metal_absorption(self, col1='C0', col2='C2'):

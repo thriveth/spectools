@@ -760,7 +760,7 @@ class SimpleFitGUI(SpecView):
         self.transition.fitted = True
         self.transition.fitter = self
         self.transition.cont_fit_params = self.model_fitted.params
-        self.cont_fit_include = np.where(self.idx & mask_bool)
+        self.transition.cont_fit_include = np.where(self.idx & mask_bool)
         for spans in self.ax.patches:
             spans.set_color('#FBB117')
         self.galaxy.transitions[self.transition.name] = self.transition

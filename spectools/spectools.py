@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import warnings
+import json
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, SpanSelector
 from astropy.table import Table
 from astropy.io import ascii
 from astropy.modeling import fitting, models
-import lmfit as lm
 import astropy.constants as c
 import astropy.units as u
+import lmfit as lm
 from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from spectools.linelists import lislines, wlsdict, MWlines
@@ -123,13 +125,15 @@ class Transition(object):
     # Metadata
     name = None
     galaxyname = None
+    cont_fit_params = None
+    cont_fit_include = None
     reference_transition = None
     fitted = False
     fitter = None  # Placeholder for fitting result
     z = 0
     # Base quantities: assumed type is astropy.Quantity
     # Other quantities are numbers, assuming the relevant units e inherited.
-    mask = None
+    mask = None    # Boolean mask
     vac_wl = None  # *Restframe* wavelength in vacuum
     air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
     wave = None    # Should later become array of *observed* wavelengths.
@@ -235,6 +239,38 @@ class Transition(object):
             )
         return p
 
+    def load_summary(self):
+        raise NotImplementedError(
+            "This feature is planned, but not yet implemented"
+        )
+
+    @property
+    def summary_dict(self):
+        if self.reference_transition:
+            refname = self.reference_transition.name
+        else:
+            refname = None
+        if self.fitted:
+            fitpars = {
+                'slope': self.cont_fit_params['slope'].value,
+                'intersect': self.cont_fit_params['intersct'].value
+            }
+        else:
+            fitpars = None
+        D = {
+            'name': self.name,
+            'reference_transition': refname,
+            'vac_wl': {
+                'value': self.vac_wl.value,
+                'unit': self.vac_wl.unit.to_string()
+            },
+            'data': self.data.to_list(),
+            'data_resampled': self.data_resampled.to_list(),
+            'mask': self.mask.tolist(),
+            'mask_resampled': self.mask_resampled.tolist(),
+            'continuum_fit_params': fitpars,
+        }
+        return D
 
 class SpecView(object):
     """ Docstring goes here.
@@ -385,62 +421,62 @@ class SpecView(object):
             self.altaxis_type = 'vel'
 
     def toggle_metal_absorption(self, col1='C0', col2='C2'):
-        # If already drawn and visible, hide.
-        if self._absorption_visible:
-            for absln in self._metal_absorption.keys():
-                self._metal_absorption[absln].set_visible(False)
-                self._metal_annotations[absln].set_visible(False)
-            self._absorption_visible = False
+        # TODO Implement a "wave type" keyword to allow for velocity, frequency
+        # etc. to occur on primary x-axis(for subclassing purposes)
         # If not drawn (and consequentially not visible), draw and set visible:
-        elif self._metal_absorption is None:
+        if self._metal_absorption is None:
             print("Populating absorption line list...")
             # from linelists import MWlines
             self._metal_absorption = {}
             self._metal_annotations = {}
             for absln in MWlines.keys():
                 control_waverange = \
-                    ((MWlines[absln] * (1.+self.galaxy.z) > self.galaxy.wave.value.min()) &
-                     (MWlines[absln] * (1.+self.galaxy.z) < self.galaxy.wave.value.max()))
-                if not control_waverange:
-                    continue
-                self._metal_absorption[absln] = self.ax.axvline(
-                    MWlines[absln] * (1. + self.galaxy.z),
-                    #color='lightgray',
-                    color=col1,
-                    linestyle=':'
-                )
-                self._metal_annotations[absln] = self.ax.annotate(
-                    absln,
-                    xy=(MWlines[absln] * (1 + self.galaxy.z), 0.85),
-                    xycoords=('data', 'axes fraction'),
-                    #color='gray',
-                    color=col1,
-                    backgroundcolor='w',
-                    rotation=90,
-                    annotation_clip=True,
-                )
-                control_waverange_MW = \
-                    ((MWlines[absln] > self.galaxy.wave.value.min()) &
-                     (MWlines[absln] < self.galaxy.wave.value.max()))
-                if not control_waverange_MW:
-                    continue
-                self._metal_absorption[absln+'_MW'] = self.ax.axvline(
-                    MWlines[absln],
-                    # color='lightgray',
-                    color=col2,
-                    linestyle=':',
-                )
-                self._metal_annotations[absln+'_MW'] = self.ax.annotate(
-                    absln+' MW',
-                    xy=(MWlines[absln], 0.85),
-                    xycoords=('data', 'axes fraction'),
-                    #color='gray',
-                    color=col2,
-                    backgroundcolor='w',
-                    rotation=90,
-                    annotation_clip=True,
-                )
+                    ((MWlines[absln] * (1.+self.galaxy.z)
+                      > self.galaxy.wave.value.min()) &
+                     (MWlines[absln] * (1.+self.galaxy.z)
+                      < self.galaxy.wave.value.max()))
+                if control_waverange:
+                    self._metal_absorption[absln] = self.ax.axvline(
+                        MWlines[absln] * (1. + self.galaxy.z),
+                        #color='lightgray',
+                        color=col1,
+                        linestyle=':'
+                    )
+                    self._metal_annotations[absln] = self.ax.annotate(
+                        absln,
+                        xy=(MWlines[absln] * (1 + self.galaxy.z), 0.85),
+                        xycoords=('data', 'axes fraction'),
+                        color=col1,
+                        backgroundcolor='w',
+                        rotation=90,
+                        annotation_clip=True,
+                    )
+
+                control_waverange_MW = (
+                    (MWlines[absln] > self.galaxy.wave.value.min()) &
+                    (MWlines[absln] < self.galaxy.wave.value.max()))
+                if control_waverange_MW:
+                    self._metal_absorption[absln+'_MW'] = self.ax.axvline(
+                        MWlines[absln],
+                        color=col2,
+                        linestyle=':',
+                    )
+                    self._metal_annotations[absln+'_MW'] = self.ax.annotate(
+                        absln+' MW',
+                        xy=(MWlines[absln], 0.85),
+                        xycoords=('data', 'axes fraction'),
+                        color=col2,
+                        backgroundcolor='w',
+                        rotation=90,
+                        annotation_clip=True,
+                    )
             self._absorption_visible = True
+        # If already drawn and visible, hide.
+        elif self._absorption_visible:
+            for absln in self._metal_absorption.keys():
+                self._metal_absorption[absln].set_visible(False)
+                self._metal_annotations[absln].set_visible(False)
+            self._absorption_visible = False
         # If already drawn, but hidden, set to visible:
         else:
             for absln in self._metal_absorption:
@@ -473,7 +509,6 @@ class SpecView(object):
                 self.errplot.get_data()[0],
                 self.galaxy.smooth_errs(width)
             )
-
 
     @property
     def freq_lims(self):
@@ -523,8 +558,6 @@ class SimpleFitGUI(SpecView):
       model saved to the `Transition` object passed to the fitter.
     - Press the Clear button to reset interface (TODO also reset parameters?)
     """
-    # TODO: Maybe also pass the ModelResult or at least the best-fit parameters
-    # to the Transition object?
 
     # Class attributes:
     model = None  # For simple subclassing to specialized cases -> save effort
@@ -677,9 +710,10 @@ class SimpleFitGUI(SpecView):
 
     def _on_ok_button(self, event):
         # Only interested in immediate surroundings
-        mask = np.where(
+        mask_bool = (  # Use np.where or not?
             (self.galaxy.restwave.value > self.transition.centroid - 50)
             & (self.galaxy.restwave.value < self.transition.centroid + 50))
+        mask = np.where(mask_bool)
         # Cut out wavelength range
         self.transition.wave = self.galaxy.wave[mask]
         # Divide by the best-fit model in a way independent of which model we
@@ -692,6 +726,8 @@ class SimpleFitGUI(SpecView):
         self.transition.z = self.galaxy.z
         self.transition.fitted = True
         self.transition.fitter = self
+        self.transition.cont_fit_params = self.model_fitted.params
+        self.cont_fit_include = self.idx & mask_bool
         for spans in self.ax.patches:
             spans.set_color('#FBB117')
         self.galaxy.transitions[self.transition.name] = self.transition
@@ -768,6 +804,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.ax.patches = []
         self.ax.lines = []  #.pop()
         self.transition.plot(self.ax, smooth=self.kernelwidth, color='k')
+        self.ax.axhline(1, ls='--', color='k', lw=.8)
 
 
     def _build_plot(self):
@@ -781,7 +818,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             drawstyle='steps-mid',
             label=self.transition.name
         )[0]
-        self.ax.set_xlim(-1500, 1500)
+        self.ax.set_xlim(-2000, 2000)
         self.ax.fill_between(
             self.transition.velocity,
             self.transition.errs,#.value,
@@ -814,6 +851,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         span = np.diff(self.transition.velocity).mean() * 5
         self.span = SpanSelector(
             self.ax, self._onselect, 'horizontal', minspan=span,)
+
     @property
     def plotdata(self):
         pd = np.ma.masked_array(self.data, self.mask)

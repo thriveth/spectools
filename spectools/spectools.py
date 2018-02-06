@@ -443,7 +443,7 @@ class SpecView(object):
             self._absorption_visible = True
         # If already drawn, but hidden, set to visible:
         else:
-            for absln in self._metal_absorption():
+            for absln in self._metal_absorption:
                 self._metal_absorption[absln].set_visible(True)
                 self._metal_annotations[absln].set_visible(True)
                 # self._metal_absorption[absln+'_MW'].set_visible(True)

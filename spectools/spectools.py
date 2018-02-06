@@ -29,11 +29,10 @@ class GalaxySpectrum(object):
     objname = None
     datatable = Table()
     z = 0.0
-    frequnit = u.kHz
+    frequnit = u.GHz
     waveunit = u.Angstrom
     velunit = u.km/u.second
     dataunit = None
-    resolution = None  # TODO Not used yet, remove?
     transitions = None
     preferred_flux = 'flam'
 
@@ -111,6 +110,10 @@ class GalaxySpectrum(object):
     @property
     def restwave(self):
         return (self.wave / (1 + self.z)).to(self.waveunit)
+
+    @property
+    def summary_dict(self):
+        return
 
 
 class Transition(object):
@@ -202,7 +205,6 @@ class Transition(object):
             )
             return newerrs
 
-
     @property
     def mask(self):
         if self.data is None:
@@ -215,7 +217,6 @@ class Transition(object):
     def mask(self, mask):
         self._mask = mask
         self.masked = True
-
     @property
     def mask_resampled(self):
         if self.reference_transition is None:
@@ -285,12 +286,24 @@ class Transition(object):
             },
             #'data': self.data.value.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
-            'data_resampled': None if self.data is None else self.data_resampled.tolist(),
+            'data_resampled': None if self.data is None else self.data_resampled.value.tolist(),
             'mask': None if self.mask is None else self.mask.tolist(),
             'mask_resampled': None if self.mask is None else self.mask_resampled.tolist(),
+            'continuum_fit_include': None if not self.fitted else self.cont_fit_include.tolist(),
             'continuum_fit_params': fitpars,
         }
         return D
+
+    def save_summary(self, path, file_format='yml'):
+        if file_format in ['y', 'yml', 'yaml']:
+            import yaml
+            with open(path, 'w') as f:
+                yaml.dump(self.summary_dict, f)
+        if file_format in ['j', 'jsn', 'json']:
+            import json
+            with open(path, 'w') as f:
+                json.dump(self.summary_dict, f)
+
 
 class SpecView(object):
     """ Docstring goes here.
@@ -747,7 +760,7 @@ class SimpleFitGUI(SpecView):
         self.transition.fitted = True
         self.transition.fitter = self
         self.transition.cont_fit_params = self.model_fitted.params
-        self.cont_fit_include = self.idx & mask_bool
+        self.cont_fit_include = np.where(self.idx & mask_bool)
         for spans in self.ax.patches:
             spans.set_color('#FBB117')
         self.galaxy.transitions[self.transition.name] = self.transition

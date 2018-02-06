@@ -264,18 +264,10 @@ class SpecView(object):
         )[0]
         self.errplot = None
         ax.axhline(0, ls='--', color='black')
-        ax.set_ylabel(self.data['flux'].unit)
-        ax.set_xlabel(self.data['wave'].unit)
+        ax.set_ylabel("Flux [{}]".format(self.data['flux'].unit))
+        ax.set_xlabel("Observed $\lambda$ [{}]".format(self.data['wave'].unit))
         self._smooth_width = 1  # No smoothing by default
         self.ax = ax
-        # self.alt_xaxis = None
-        # self.altaxis_type = None
-        # self.skyatlas = None
-        # self.skylines_visible = False
-        # self._metal_absorption = None
-        # self._absorption_visible = False
-        # self._sky_lines = None
-        # self._sky_flux_limit = 1  # Sane default
 
     def toggle_sky_lines(self, min_flux=1):
         if min_flux != self._sky_flux_limit:  # Rebuild if new value passed
@@ -343,7 +335,9 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.restwave_lims.value)
-            altx.set_xlabel('Restframe $\lambda$ [{}]'.format(self.galaxy.waveunit))
+            altx.set_xlabel(
+                '{} Restframe $\lambda$ [{}]'.format(
+                    self.galaxy.galaxyname, self.galaxy.waveunit))
             self.altaxis_type = 'restframe'
 
     def toggle_frequency_xaxis(self):
@@ -359,13 +353,19 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.freq_lims.value)
-            altx.set_xlabel(self.galaxy.frequnit)
+            altx.set_xlabel(
+                '{} frequency [{}]'.format(
+                    self.galaxy.galaxyname, self.galaxy.frequnit))
             self.altaxis_type = 'freq'
 
     def toggle_velocity_xaxis(self):
+        """Toggle upper velocity axis.
+
+        Prompts for a reference wavelength if the ref_wl attribute of the
+        `SpecView` instance is not set.
+        """
         if self.ref_wl is None:
             self.ref_wl = float(input('Please enter reference wavelength > '))
-        ref_wl = self.ref_wl
 
         if self.altaxis_type == 'vel':
             self.altx.remove()
@@ -379,7 +379,9 @@ class SpecView(object):
             altx = ax.twiny()
             self.altx = altx
             altx.set_xlim(self.vel_lims.value)
-            altx.set_xlabel(self.galaxy.velunit)
+            altx.set_xlabel(
+                '{} Velocity [{}]'.format(
+                    self.galaxy.galaxyname, self.galaxy.velunit))
             self.altaxis_type = 'vel'
 
     def toggle_metal_absorption(self, col1='C0', col2='C2'):

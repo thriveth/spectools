@@ -128,6 +128,8 @@ class Transition(object):
     cont_fit_params = None
     cont_fit_include = None
     reference_transition = None
+    masked = False
+    _mask = None
     fitted = False
     fitter = None  # Placeholder for fitting result
     z = 0
@@ -205,7 +207,14 @@ class Transition(object):
     def mask(self):
         if self.data is None:
             return None
-        return np.zeros_like(self.data.value, dtype='bool')
+        if not self_masked:
+            return np.zeros_like(self.data.value, dtype='bool')
+        return self._mask
+
+    @mask.setter
+    def mask(self, mask):
+        self._mask = mask
+        self.masked = True
 
     @property
     def mask_resampled(self):

@@ -159,6 +159,10 @@ class Transition(object):
         return wl_to_v(self.wave.value, self.centroid * (1. + self.z))
 
     @property
+    def thistype(self):
+        return(type(self))
+
+    @property
     def wave_resampled(self):
         if self.reference_transition is None:
             return self.wave.value
@@ -170,10 +174,6 @@ class Transition(object):
             return wave
 
     @property
-    def thistype(self):
-        return(type(self))
-
-    @property
     def velocity_resampled(self):
         if self.reference_transition is None:
             return self.velocity
@@ -183,12 +183,12 @@ class Transition(object):
     @property
     def data_resampled(self):
         if not self.reference_transition:
-            return self.data
-        else:  # if isinstance(self.reference_transition, Transition):
-            newdata = np.interp(
-                self.velocity_resampled, self.velocity, self.data
-            )
-            return newdata
+            dr = self.data
+        elif self.data is None:
+            dr = None
+        else:
+            dr = np.interp(self.velocity_resampled, self.velocity, self.data)
+        return dr
 
     @property
     def errs_resampled(self):
@@ -275,6 +275,8 @@ class Transition(object):
         else:
             fitpars = None
 
+        Ddata = None if self.data is None else self.data.value.tolist()
+
         D = {
             'name': self.name,
             'reference_transition': refname,
@@ -282,8 +284,9 @@ class Transition(object):
                 'value': self.vac_wl.value,
                 'unit': self.vac_wl.unit.to_string()
             },
-            'data': self.data.value.tolist(),
-            'data_resampled': self.data_resampled.tolist(),
+            #'data': self.data.value.tolist(),
+            'data': None if self.data is None else self.data.value.tolist(),
+            'data_resampled': None if self.data is None else self.data_resampled.tolist(),
             'mask': self.mask.tolist(),
             'mask_resampled': self.mask_resampled.tolist(),
             'continuum_fit_params': fitpars,

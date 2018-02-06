@@ -233,7 +233,7 @@ class Transition(object):
         if ax is None:
             fig, ax = plt.subplots(1)
         if self.mask is None:
-            mask = np.zeros_like(self.data).astype(bool).value
+            mask = np.zeros_like(self.data).astype(bool)#.value
         else:
             mask = self.mask
         invmask = np.invert(mask)

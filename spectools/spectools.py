@@ -250,13 +250,15 @@ class Transition(object):
             refname = self.reference_transition.name
         else:
             refname = None
+
         if self.fitted:
             fitpars = {
                 'slope': self.cont_fit_params['slope'].value,
-                'intersect': self.cont_fit_params['intersct'].value
+                'intersect': self.cont_fit_params['intersect'].value
             }
         else:
             fitpars = None
+
         D = {
             'name': self.name,
             'reference_transition': refname,
@@ -270,6 +272,7 @@ class Transition(object):
             'mask_resampled': self.mask_resampled.tolist(),
             'continuum_fit_params': fitpars,
         }
+
         return D
 
 class SpecView(object):

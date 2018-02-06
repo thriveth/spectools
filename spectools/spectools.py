@@ -273,8 +273,8 @@ class Transition(object):
                 'value': self.vac_wl.value,
                 'unit': self.vac_wl.unit.to_string()
             },
-            'data': self.data.value.to_list(),
-            'data_resampled': self.data_resampled.to_list(),
+            'data': self.data.value.tolist(),
+            'data_resampled': self.data_resampled.tolist(),
             'mask': self.mask.tolist(),
             'mask_resampled': self.mask_resampled.tolist(),
             'continuum_fit_params': fitpars,

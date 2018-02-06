@@ -133,7 +133,7 @@ class Transition(object):
     z = 0
     # Base quantities: assumed type is astropy.Quantity
     # Other quantities are numbers, assuming the relevant units e inherited.
-    mask = None    # Boolean mask
+    #mask = None    # Boolean mask
     vac_wl = None  # *Restframe* wavelength in vacuum
     air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
     wave = None    # Should later become array of *observed* wavelengths.
@@ -199,6 +199,13 @@ class Transition(object):
                 self.velocity_resampled, self.velocity, self.errs
             )
             return newerrs
+
+
+    @property
+    def mask(self):
+        if self.data is None:
+            return None
+        return np.zeros_like(self.data.value, dtype='bool')
 
     @property
     def mask_resampled(self):
@@ -266,7 +273,7 @@ class Transition(object):
                 'value': self.vac_wl.value,
                 'unit': self.vac_wl.unit.to_string()
             },
-            'data': self.data.to_list(),
+            'data': self.data.value.to_list(),
             'data_resampled': self.data_resampled.to_list(),
             'mask': self.mask.tolist(),
             'mask_resampled': self.mask_resampled.tolist(),

@@ -269,8 +269,8 @@ class Transition(object):
 
         if self.fitted:
             fitpars = {
-                'slope': self.cont_fit_params['slope'].value,
-                'intersect': self.cont_fit_params['intercept'].value
+                'slope': float(self.cont_fit_params['slope'].value),
+                'intercept': float(self.cont_fit_params['intercept'].value)
             }
         else:
             fitpars = None

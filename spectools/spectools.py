@@ -269,13 +269,12 @@ class Transition(object):
 
         if self.fitted:
             fitpars = {
-                'slope': float(self.cont_fit_params['slope'].value),
-                'intercept': float(self.cont_fit_params['intercept'].value)
-            }
+                'slope': float(
+                    self.cont_fit_params['slope'].value),
+                'intercept': float(
+                    self.cont_fit_params['intercept'].value)}
         else:
             fitpars = None
-
-        Ddata = None if self.data is None else self.data.value.tolist()
 
         D = {
             'name': self.name,
@@ -287,11 +286,10 @@ class Transition(object):
             #'data': self.data.value.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
             'data_resampled': None if self.data is None else self.data_resampled.tolist(),
-            'mask': self.mask.tolist(),
-            'mask_resampled': self.mask_resampled.tolist(),
+            'mask': None if self.mask is None else self.mask.tolist(),
+            'mask_resampled': None if self.mask is None else self.mask_resampled.tolist(),
             'continuum_fit_params': fitpars,
         }
-
         return D
 
 class SpecView(object):

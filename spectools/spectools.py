@@ -207,7 +207,7 @@ class Transition(object):
     def mask(self):
         if self.data is None:
             return None
-        if not self_masked:
+        if not self.masked:
             return np.zeros_like(self.data.value, dtype='bool')
         return self._mask
 

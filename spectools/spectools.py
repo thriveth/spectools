@@ -157,7 +157,7 @@ class GalaxySpectrum(object):
         """
         if not theset in self._base_lines:
             raise KeyError("This transition is not the base of any line set")
-        T = Table(transitions[theset].velocity.reshape(-1, 1))
+        T = Table(self.transitions[theset].velocity.reshape(-1, 1))
         alllines = [theset] + self.line_sets[theset]
         for line in alllines:
             colnames = ["{} {}".format(line, i) for i in ['flux', 'errs', 'mask']]
@@ -166,10 +166,6 @@ class GalaxySpectrum(object):
             mcol = Column(transitions[line].mask_resampled, name=colnames[2])
             T.add_columns([fcol, ecol, mcol])
         return T
-
-
-
-
 
 
 class Transition(object):

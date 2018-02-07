@@ -13,6 +13,7 @@ from astropy.modeling import fitting, models
 import astropy.constants as c
 import astropy.units as u
 import lmfit as lm
+# Internal imports from spectools
 from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
     vacuum_to_air
 from spectools.linelists import lislines, wlsdict, MWlines
@@ -117,7 +118,7 @@ class GalaxySpectrum(object):
         lsets = {}
         for t in transitions:
             if t.reference_transition is None:
-                tslines = [r.name if r.reference_transition == t.name for r in self.transitions]
+                tslines = [r.name for r in self.transitions if r.reference_transition == t.name ]
                 lsets[t] = tslines
         return lsets
 

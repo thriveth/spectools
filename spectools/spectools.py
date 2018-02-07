@@ -113,7 +113,21 @@ class GalaxySpectrum(object):
 
     @property
     def summary_dict(self):
-        return
+        sd = {}
+        sd['transitions'] = {t:self.transitions[t].summary_dict for t in self.transitions}
+        sd['galaxyname'] = self.objname
+        sd['redshift'] = float(self.z)
+        return sd
+
+    def save_summary(self, path, file_format='yml'):
+        if file_format.lower() in ['y', 'yml', 'yaml']:
+            with open(path, 'w') as f:
+                yaml.dump(self.summary_dict, f, indent=2)
+        elif file_format.lower() in ['j', 'jsn', 'json']:
+            with open(path, 'w') as f:
+                json.dump(self.summary_dict, f, indent=2)
+        else:
+            raise KeyError('File format must be yaml or json')
 
 
 class Transition(object):
@@ -298,11 +312,11 @@ class Transition(object):
         if file_format in ['y', 'yml', 'yaml']:
             import yaml
             with open(path, 'w') as f:
-                yaml.dump(self.summary_dict, f)
+                yaml.dump(self.summary_dict, f, indent=2)
         if file_format in ['j', 'jsn', 'json']:
             import json
             with open(path, 'w') as f:
-                json.dump(self.summary_dict, f)
+                json.dump(self.summary_dict, f, indent=2)
 
 
 class SpecView(object):

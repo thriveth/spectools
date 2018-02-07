@@ -186,7 +186,7 @@ class Transition(object):
     @property
     def data_resampled(self):
         if not self.reference_transition:
-            dr = self.data
+            dr = self.data.value
         elif self.data is None:
             dr = None
         else:
@@ -286,7 +286,7 @@ class Transition(object):
             },
             #'data': self.data.value.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
-            'data_resampled': None if self.data is None else self.data_resampled.value.tolist(),
+            'data_resampled': None if self.data is None else self.data_resampled.tolist(),
             'mask': None if self.mask is None else self.mask.tolist(),
             'mask_resampled': None if self.mask is None else self.mask_resampled.tolist(),
             'continuum_fit_include': None if not self.fitted else self.cont_fit_include.tolist(),

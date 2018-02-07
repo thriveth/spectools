@@ -14,9 +14,11 @@ import astropy.constants as c
 import astropy.units as u
 import lmfit as lm
 # Internal imports from spectools
-from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
-    vacuum_to_air
-from spectools.linelists import lislines, wlsdict, MWlines
+# from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
+#     vacuum_to_air
+# from spectools.linelists import lislines, wlsdict, MWlines
+from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, vacuum_to_air
+from .linelists import lislines, wlsdict, MWlines
 
 class BaseGUI(object):
     def __init__(self):
@@ -121,7 +123,7 @@ class GalaxySpectrum(object):
                 if self.transitions[t].reference_transition is None:
                     tslines = [
                         r.name for r in self.transitions.values()
-                        if r.reference_transition == self.transitions[t].name
+                        if r.reference_transition.name == self.transitions[t].name
                     ]
                     lsets[t] = tslines
         return lsets
@@ -144,7 +146,7 @@ class GalaxySpectrum(object):
         else:
             raise KeyError('File format must be yaml or json')
 
-    def velocity_LIS_table(self, lines=None, refline='Si II 1190'):
+    def velocity_table(self, refline='Si II 1190'):
         return
 
 
@@ -166,7 +168,7 @@ class Transition(object):
     galaxyname = None
     cont_fit_params = None
     cont_fit_include = None
-    reference_transition = None
+    reference_transition = None  # Should be string
     masked = False
     _mask = None
     fitted = False

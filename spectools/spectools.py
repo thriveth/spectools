@@ -127,7 +127,8 @@ class GalaxySpectrum(object):
                 if t.reference_transition is None:
                     tslines = []
                     for r in self.transitions.values():
-                        if self.transitions.
+                        pass
+                        #if self.transitions.
             # for t in self.transitions:
             #     if self.transitions[t].reference_transition is None:
             #         tslines = []

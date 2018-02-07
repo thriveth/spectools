@@ -115,7 +115,7 @@ class GalaxySpectrum(object):
 
     @property
     def _base_lines(self):
-        out = [t.name for t in self.transitions.values() is t.reference_transition is None]
+        out = [t.name for t in self.transitions.values() if t.reference_transition is None]
         return out
 
     @property

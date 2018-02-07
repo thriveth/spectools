@@ -7,7 +7,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, SpanSelector
-from astropy.table import Table
+from astropy.table import Table, Column
 from astropy.io import ascii
 from astropy.modeling import fitting, models
 import astropy.constants as c

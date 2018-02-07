@@ -115,31 +115,22 @@ class GalaxySpectrum(object):
 
     @property
     def _base_lines(self):
+        if self.transitions is None:
+            return None
         out = [t.name for t in self.transitions.values() if t.reference_transition is None]
         return out
 
     @property
     def line_sets(self):
-        if self.transitions is None:
-            lsets = None
-        else:
-            lsets = {}
+        lsets = {}
+        for l in self._base_lines:
+            tlines = []
             for t in self.transitions.values():
-                if t.reference_transition is None:
-                    tslines = []
-                    for r in self.transitions.values():
-                        pass
-                        #if self.transitions.
-            # for t in self.transitions:
-            #     if self.transitions[t].reference_transition is None:
-            #         tslines = []
-            #         for r in self.transitions:
-            #             if r.reference_transition is not None:
-            #                 if r.reference_transition.name == self.transitions[t].name
-            #             r.name for r in self.transitions.values()
-            #             if r.reference_transition.name == self.transitions[t].name
-            #         ]
-            #         lsets[t] = tslines
+                if (t.reference_transition is None):
+                    continue
+                if t.reference_transition.name == i):
+                    tlines.append(t.name)
+            lsets[i] = tlines
         return lsets
 
     @property

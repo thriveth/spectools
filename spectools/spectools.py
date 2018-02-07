@@ -25,7 +25,6 @@ class BaseGUI(object):
 class GalaxySpectrum(object):
     """ Insert docstring here.
     """
-
     objname = None
     datatable = Table()
     z = 0.0

@@ -155,6 +155,7 @@ class GalaxySpectrum(object):
         """ `theset` must e a string naming the base transitions of the desired
         set.
         """
+        transitions = self.transitions
         if not theset in self._base_lines:
             raise KeyError("This transition is not the base of any line set")
         T = Table(self.transitions[theset].velocity.reshape(-1, 1))

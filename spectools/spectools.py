@@ -151,8 +151,21 @@ class GalaxySpectrum(object):
         else:
             raise KeyError('File format must be yaml or json')
 
-    def velocity_table(self, refline='Si II 1190'):
-        return
+    def velocity_table(self, theset):
+        """ `theset` must e a string naming the base transitions of the desired
+        set.
+        """
+        if not theset in self._base_lines:
+            raise KeyError("This transition is not the base of any line set")
+        T = Table(transitions[theset].velocity.reshape(-1, 1))
+        alllines = [theset] + self.line_sets[theset]
+        for line in alllines:
+            colnames = ["{} {}".format(line, i) for i in ['flux', 'errs', 'mask']]
+            fcol = Column(transitions[line].data_resampled, name=colnames[0])
+            ecol = Column(transitions[line].errs_resampled, name=colnames[1])
+            mcol = Column(transitions[line].mask_resampled, name=colnames[2])
+            T.add_columns([fcol, ecol, mcol])
+        return T
 
 
 

@@ -111,6 +111,17 @@ class GalaxySpectrum(object):
         return (self.wave / (1 + self.z)).to(self.waveunit)
 
     @property
+    def line_sets(self):
+        if self.transitions is None:
+            return None
+        lsets = {}
+        for t in transitions:
+            if t.reference_transition is None:
+                tslines = [r.name if r.reference_transition == t.name for r in self.transitions]
+                lsets[t] = tslines
+        return lsets
+
+    @property
     def summary_dict(self):
         sd = {}
         sd['transitions'] = {t:self.transitions[t].summary_dict for t in self.transitions}
@@ -127,6 +138,13 @@ class GalaxySpectrum(object):
                 json.dump(self.summary_dict, f, indent=2)
         else:
             raise KeyError('File format must be yaml or json')
+
+    def velocity_LIS_table(self, lines=None, refline='Si II 1190'):
+        return
+
+
+
+
 
 
 class Transition(object):
@@ -757,8 +775,8 @@ class SimpleFitGUI(SpecView):
     def _on_ok_button(self, event):
         # Only interested in immediate surroundings
         mask_bool = (  # Use np.where or not?
-            (self.galaxy.restwave.value > self.transition.centroid - 50)
-            & (self.galaxy.restwave.value < self.transition.centroid + 50))
+            (self.galaxy.restwave.value > self.transition.centroid - 30)
+            & (self.galaxy.restwave.value < self.transition.centroid + 30))
         mask = np.where(mask_bool)
         # Cut out wavelength range
         self.transition.wave = self.galaxy.wave[mask]
@@ -851,7 +869,6 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.ax.lines = []  #.pop()
         self.transition.plot(self.ax, smooth=self.kernelwidth, color='k')
         self.ax.axhline(1, ls='--', color='k', lw=.8)
-
 
     def _build_plot(self):
         """ Name should be self explaining. Separated from `__init__` for

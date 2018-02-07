@@ -128,7 +128,7 @@ class GalaxySpectrum(object):
             for t in self.transitions.values():
                 if (t.reference_transition is None):
                     continue
-                if t.reference_transition.name == i):
+                if t.reference_transition.name == i:
                     tlines.append(t.name)
             lsets[i] = tlines
         return lsets

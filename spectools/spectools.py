@@ -159,12 +159,14 @@ class GalaxySpectrum(object):
         if not theset in self._base_lines:
             raise KeyError("This transition is not the base of any line set")
         T = Table(self.transitions[theset].velocity.reshape(-1, 1))
+        T.columns[0].name = 'Velocity'
+        T.columns[0].unit = transitions[theset].velocity.unit
         alllines = [theset] + self.line_sets[theset]
         for line in alllines:
             colnames = ["{} {}".format(line, i) for i in ['flux', 'errs', 'mask']]
-            fcol = Column(transitions[line].data_resampled, name=colnames[0])
-            ecol = Column(transitions[line].errs_resampled, name=colnames[1])
-            mcol = Column(transitions[line].mask_resampled, name=colnames[2])
+            fcol = Column(transitions[line].data_resampled, name=colnames[0], unit=u.m/u.m)
+            ecol = Column(transitions[line].errs_resampled, name=colnames[1], unit=u.m/u.m)
+            mcol = Column(transitions[line].mask_resampled, name=colnames[2], unit=u.m/u.m)
             T.add_columns([fcol, ecol, mcol])
         return T
 

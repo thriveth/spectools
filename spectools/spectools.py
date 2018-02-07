@@ -126,11 +126,11 @@ class GalaxySpectrum(object):
         for l in self._base_lines:
             tlines = []
             for t in self.transitions.values():
-                if (t.reference_transition is None):
+                if t.reference_transition is None:
                     continue
-                if t.reference_transition.name == i:
+                if t.reference_transition.name == l:
                     tlines.append(t.name)
-            lsets[i] = tlines
+            lsets[l] = tlines
         return lsets
 
     @property

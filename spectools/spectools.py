@@ -4,6 +4,7 @@
 import warnings
 import json
 import yaml
+import textwrap as tw
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, SpanSelector
@@ -142,8 +143,14 @@ class GalaxySpectrum(object):
         return sd
 
     def save_summary(self, path, file_format='yml'):
+        linelist = [t.name for t in self.transitions.values()]
+        preamble = """This is the summary for galaxy {}, containing the lines
+        """.format(self.objname) + str(linelist)
         if file_format.lower() in ['y', 'yml', 'yaml']:
+            preamble = tw.fill(preamble, width=78, subsequent_indent="# ")
+            preamble += '\n'
             with open(path, 'w') as f:
+                f.write(preamble+"\n\n")
                 yaml.dump(self.summary_dict, f, indent=2)
         elif file_format.lower() in ['j', 'jsn', 'json']:
             with open(path, 'w') as f:

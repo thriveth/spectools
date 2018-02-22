@@ -14,10 +14,6 @@ from astropy.modeling import fitting, models
 import astropy.constants as c
 import astropy.units as u
 import lmfit as lm
-# Internal imports from spectools
-# from spectools.helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, \
-#     vacuum_to_air
-# from spectools.linelists import lislines, wlsdict, MWlines
 from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, vacuum_to_air
 from .linelists import lislines, wlsdict, MWlines
 
@@ -142,22 +138,6 @@ class GalaxySpectrum(object):
         sd['redshift'] = float(self.z)
         return sd
 
-    def save_summary(self, path, file_format='yml'):
-        linelist = [t.name for t in self.transitions.values()]
-        preamble = """This is the summary for galaxy {}, containing the lines
-        """.format(self.objname) + str(linelist)
-        if file_format.lower() in ['y', 'yml', 'yaml']:
-            preamble = tw.fill(preamble, width=78, subsequent_indent="# ")
-            preamble += '\n'
-            with open(path, 'w') as f:
-                f.write(preamble+"\n\n")
-                yaml.dump(self.summary_dict, f, indent=2)
-        elif file_format.lower() in ['j', 'jsn', 'json']:
-            with open(path, 'w') as f:
-                json.dump(self.summary_dict, f, indent=2)
-        else:
-            raise KeyError('File format must be yaml or json')
-
     def velocity_table(self, theset):
         """ `theset` must e a string naming the base transitions of the desired
         set.
@@ -176,6 +156,27 @@ class GalaxySpectrum(object):
             T.add_columns([fcol, ecol, mcol])
         return T
 
+    def save_summary(self, path, file_format='yml'):
+        linelist = [t.name for t in self.transitions.values()]
+        preamble = """This is the summary for galaxy {}, containing the lines
+        """.format(self.objname) + str(linelist)
+        if file_format.lower() in ['y', 'yml', 'yaml']:
+            preamble = tw.fill(preamble, width=78, subsequent_indent="# ")
+            preamble += '\n'
+            with open(path, 'w') as f:
+                f.write(preamble+"\n\n")
+                yaml.dump(self.summary_dict, f, indent=2)
+        elif file_format.lower() in ['j', 'jsn', 'json']:
+            with open(path, 'w') as f:
+                json.dump(self.summary_dict, f, indent=2)
+        else:
+            raise KeyError('File format must be yaml or json')
+
+    def load_summary(self, summary):
+        self.objname = summary['galaxyname']
+        self.z = summary['redshift']
+        for t in summary['transitions']:
+            T = Transition()
 
 class Transition(object):
     """ This object contains two kinds of information: Intrinsic information
@@ -365,6 +366,9 @@ class Transition(object):
             with open(path, 'w') as f:
                 json.dump(self.summary_dict, f, indent=2)
 
+    def load_line_summary(self, summary):
+        """ Summary datatype is a dict, loaded fro yaml file."""
+
 
 class SpecView(object):
     """ Docstring goes here.
@@ -469,6 +473,7 @@ class SpecView(object):
                 '{} Restframe $\lambda$ [{}]'.format(
                     self.galaxy.objname, self.galaxy.waveunit))
             self.altaxis_type = 'restframe'
+            self._fix_zorder()
 
     def toggle_frequency_xaxis(self):
         if self.altaxis_type == 'freq':
@@ -487,6 +492,7 @@ class SpecView(object):
                 '{} frequency [{}]'.format(
                     self.galaxy.objname, self.galaxy.frequnit))
             self.altaxis_type = 'freq'
+            self._fix_zorder()
 
     def toggle_velocity_xaxis(self):
         """Toggle upper velocity axis.
@@ -513,6 +519,7 @@ class SpecView(object):
                 '{} Velocity [{}]'.format(
                     self.galaxy.objname, self.galaxy.velunit))
             self.altaxis_type = 'vel'
+            self._fix_zorder()
 
     def toggle_metal_absorption(self, col1='C0', col2='C2'):
         # TODO Implement a "wave type" keyword to allow for velocity, frequency
@@ -635,6 +642,14 @@ class SpecView(object):
         self.altx.set_xlim(out.value)
         return out
 
+    def _fix_zorder(self):
+        """ Addresses an annoying behavior introduced in Matplotlib 2.1, where
+        the latest added axes steals events. So manually, we need to fix the
+        zorder such that the 'mother' axes is on top.
+        Remove this if upstream matplotlib comes up with a fix. Very irritating
+        regression.
+        """
+        self.ax.set_zorder(self.altx.get_zorder()+1)
 
 class SimpleFitGUI(SpecView):
     """ Simple interactive GUI for fitting a model to a 1D spectrum.
@@ -747,7 +762,7 @@ class SimpleFitGUI(SpecView):
         )
         span = self.galaxy.wave.diff().mean().value * 5
         self.span = SpanSelector(
-            self.ax, self._onselect, 'horizontal', useblit=True, minspan=span,
+            self.ax, self._onselect, 'horizontal', minspan=span,
         )
 
     def __call__(self):
@@ -1137,3 +1152,7 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
     return view
 
 
+def read_summary(path):
+    with open(path, 'r') as f:
+        y = yaml.load(f)
+    return y

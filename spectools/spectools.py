@@ -38,7 +38,16 @@ class GalaxySpectrum(object):
     def read_data(self, datafile):
         """ So far only calls ascii.read() with no fancy settings.
         """
-        self.datatable = ascii.read(datafile)
+        datatable = ascii.read(datafile)
+        # Make sure all columns have correct datatype
+        for cn in datatable.columns:
+            c = datatable.columns[cn]
+            try:
+                datatable[cn] = np.float64(c)
+            except:
+                raise TypeError(
+                    "Column {} could not be converted to floats.".format(cn))
+        self.datatable = datatable
         if not 'flux' in self.datatable.colnames:
             if self.preferred_flux in self.datatable.colnames:
                 self.datatable[self.preferred_flux].name = 'flux'

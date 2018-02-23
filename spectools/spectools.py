@@ -744,7 +744,7 @@ class SimpleFitGUI(SpecView):
         )
         # print(np.median(self.data))
         self.ax.axhline(1, color='k', ls='--')
-        self.ax.set_ylim(bottom=0., top=np.median(self.galaxy.data.value) * 2.)
+        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.galaxy.data.value) * 2.)
         axshw = self.fig.add_axes([0.91, 0.82, 0.08, 0.06])
         axclr = self.fig.add_axes([0.91, 0.75, 0.08, 0.06])
         ax_ok = self.fig.add_axes([0.91, 0.68, 0.08, 0.06])
@@ -773,7 +773,7 @@ class SimpleFitGUI(SpecView):
             verticalalignment='top',
             transform=self.ax.transAxes
         )
-        span = self.galaxy.wave.diff().mean().value * 5
+        span = self.galaxy.wave.diff().nanmean().value * 5
         self.span = SpanSelector(
             self.ax, self._onselect, 'horizontal', minspan=span,
         )
@@ -947,7 +947,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         )
         # print(np.median(self.data))
         self.ax.axhline(1, color='k', ls='--', lw=.8)
-        self.ax.set_ylim(bottom=0., top=np.median(self.data) * 2.)
+        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.data) * 2.)
         axshw = self.fig.add_axes([0.91, 0.82, 0.08, 0.06])
         axclr = self.fig.add_axes([0.91, 0.75, 0.08, 0.06])
         ax_ok = self.fig.add_axes([0.91, 0.68, 0.08, 0.06])
@@ -969,7 +969,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             verticalalignment='top',
             transform=self.ax.transAxes
         )
-        span = np.diff(self.transition.velocity).mean() * 5
+        span = np.diff(self.transition.velocity).nanmean() * 5
         self.span = SpanSelector(
             self.ax, self._onselect, 'horizontal', minspan=span,)
 
@@ -990,8 +990,8 @@ def rebin(table, factor):
         table = table[:-remainder]
     num_groups = len(table) / factor
     groups = np.arange(num_groups).repeat(factor)
-    wave_bin = table['wave'].group_by(groups).groups.aggregate(np.mean)
-    flux_bin = table['flux'].group_by(groups).groups.aggregate(np.mean)
+    wave_bin = table['wave'].group_by(groups).groups.aggregate(np.nanmean)
+    flux_bin = table['flux'].group_by(groups).groups.aggregate(np.nanmean)
     errs_bin = (table['noise']**2).group_by(groups).groups.aggregate(np.sum)
     errs_bin = np.sqrt(errs_bin) / factor
     return Table([wave_bin, flux_bin, errs_bin])
@@ -1023,8 +1023,8 @@ def plot_lines(spectrum, ax=None, smooth=False, binning=False):
         if remainder != 0:
             data = data[:-remainder]
             wave = wave[:-remainder]
-        data = data.reshape(-1, binning).mean(1)
-        wave = wave.reshape(-1, binning).mean(1)
+        data = data.reshape(-1, binning).nanmean(1)
+        wave = wave.reshape(-1, binning).nanmean(1)
 
     if smooth:
         data = np.convolve(data, np.ones(smooth) / smooth, mode='same')

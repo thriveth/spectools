@@ -346,7 +346,11 @@ class Transition(object):
                 'value': self.vac_wl.value,
                 'unit': self.vac_wl.unit.to_string()
             },
-            #'data': self.data.value.tolist(),
+            # Exclude resampled versions? Redundant but useful.
+            'wave': None if self.data is None else self.wave.value.tolist(),
+            'wave_resampled': None if self.data is None else self.wave_resampled.tolist(),
+            'velocity': None if self.data is None else self.velocity.value.tolist(),
+            'velocity_resampled': None if self.data is None else self.velocity_resampled.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
             'data_resampled': None if self.data is None else self.data_resampled.tolist(),
             'mask': None if self.mask is None else self.mask.tolist(),

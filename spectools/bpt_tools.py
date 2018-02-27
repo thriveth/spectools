@@ -3,11 +3,20 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.table import Table
 
 
 def load_sdssdata():
     sdssdata = Table.read('./bpt_sdss_dr7.txt', format='ascii')
     return sdssdata
+
+def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
+    if not ax:
+        fig, ax = plt.subplots(1)
+    xcloud = 'OI/Ha' if diagnostic='OI' else 'OIII/Ha'
+
+    return
+
 
 def draw_O123_diags(ax):
     ax.plot(np.linspace(-3, 0, 100), -1.70 * np.linspace(-3, 0, 100) - 2.163, 'k-')

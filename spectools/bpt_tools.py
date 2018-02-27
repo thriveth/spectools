@@ -4,10 +4,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table
+import pkg_resources
+
+DATA_PATH = pkg_resources.resource_filename('spectools', 'data/')
+bpt_data = pkg_resources.resource_filename('spectools', 'data/bpt_sdss_dr7.txt')
 
 
 def load_sdssdata():
-    sdssdata = Table.read('./bpt_sdss_dr7.txt', format='ascii')
+    sdssdata = Table.read(bpt_data, format='ascii')
     return sdssdata
 
 def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):

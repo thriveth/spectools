@@ -14,7 +14,6 @@ def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
     if not ax:
         fig, ax = plt.subplots(1)
     xcloud = 'OI/Ha' if diagnostic=='OI' else 'OIII/Ha'
-
     return
 
 

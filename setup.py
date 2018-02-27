@@ -8,6 +8,6 @@ setup(
     author='T. E. Rivera-Thorsen',
     author_email='eriveth@uio.no',
     packages=['spectools'],
-    package_data={'spectools':['data/*.csv', 'data/*.ecsv', 'data/*.txt']}
+    package_data={'spectools':['data/*.csv', 'data/*.ecsv', 'data/*.txt']},
     license='GPL3',
 )

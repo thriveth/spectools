@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from astropy.table import Table
 import pkg_resources
@@ -15,10 +16,26 @@ def load_sdssdata():
     return sdssdata
 
 def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
+    'Diagnostic can be OI or OIII'
     if not ax:
         fig, ax = plt.subplots(1)
-    xcloud = 'OI/Ha' if diagnostic=='OI' else 'OIII/Ha'
-    return
+    clouddata = load_sdssdata()
+    xcloud = 'OI/Ha' if diagnostic=='OI' else 'NII/Ha'
+    ycloud = 'OIII/Hb'
+    sdsscloud = ax.hist2d(
+        clouddata['log '+xcloud],
+        clouddata['log '+ycloud],
+        cmap='Greys',
+        bins=50,
+        norm=mpl.colors.LogNorm(),
+        range=[[-2.5, 0.5], [-1.5, 1.5]],
+        vmax=100000,
+    )
+    if diagnostic == 'OIII':
+        ax = draw_N2_O3_diags(ax)
+    elif diagnostic == 'OI':
+        ax = draw_O13_diags(ax)
+    return ax
 
 
 def draw_O123_diags(ax):

@@ -242,7 +242,7 @@ class Transition(object):
             return self.wave.value
         else:
             wave = v_to_wl(
-                self.reference_transition.velocity.value,
+                self.reference_transition.velocity,#.value,
                 self.centroid
             )
             return wave
@@ -358,7 +358,7 @@ class Transition(object):
             # Exclude resampled versions? Redundant but useful.
             'wave': None if self.data is None else self.wave.value.tolist(),
             'wave_resampled': None if self.data is None else self.wave_resampled.tolist(),
-            'velocity': None if self.data is None else self.velocity.value.tolist(),
+            'velocity': None if self.data is None else self.velocity.tolist(),
             'velocity_resampled': None if self.data is None else self.velocity_resampled.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
             'data_resampled': None if self.data is None else self.data_resampled.tolist(),
@@ -773,7 +773,7 @@ class SimpleFitGUI(SpecView):
             verticalalignment='top',
             transform=self.ax.transAxes
         )
-        span = self.galaxy.wave.diff().nanmean().value * 5
+        span = np.nanmean(self.galaxy.wave.diff().value) * 5
         self.span = SpanSelector(
             self.ax, self._onselect, 'horizontal', minspan=span,
         )
@@ -969,7 +969,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             verticalalignment='top',
             transform=self.ax.transAxes
         )
-        span = np.diff(self.transition.velocity).nanmean() * 5
+        span = np.diff(self.transition.velocity).mean() * 5
         self.span = SpanSelector(
             self.ax, self._onselect, 'horizontal', minspan=span,)
 

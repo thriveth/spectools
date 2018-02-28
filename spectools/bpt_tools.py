@@ -37,6 +37,16 @@ def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
         ax = draw_O13_diags(ax)
     return ax
 
+def abund_sequence(z):
+    """ Draws the Star formation abundance tracks of Kewley+ 2013 (eq. 5) as a
+    function of redshift.
+    """
+    # TODO: Needs to fix the limits of interval of definition somehow, it
+    # changes with redshift and plots ugly artifacts when not correct.
+    xs = np.linspace(-2, 0.3, 1000)
+    denom = xs + 0.08 - 0.1833 * z
+    ys = 1.1 + 0.03 * z + 0.61/denom
+    return xs, ys
 
 def draw_O123_diags(ax):
     ax.plot(np.linspace(-3, 0, 100), -1.70 * np.linspace(-3, 0, 100) - 2.163, 'k-')

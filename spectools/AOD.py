@@ -130,6 +130,7 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
         print("\r", i+1,"/", fluxarr.shape[0], ", Datapoints: ", len(idx), end="")
         if len(idx) < 2:
             reslines.append([vel, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+            fitresults.append(None)
             continue
         flam = flams[idx]
         flux = fluxarr[i, idx]
@@ -137,16 +138,6 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
         if fitmethod == 'lmfit':
             MLE, result = fit_single_bin(flam, flux, errs, mc=mc)
             if mc:
-                ## Set the confidence level as the values beyond which all counts
-                ## are smaller than counts.max()/2
-                #fhist = np.histogram(
-                    #result.flatchain['f_c'], bins=100, range=(0, 1))
-                #fidx = np.where(fhist[0] > fhist[0].max()/2)
-                #flower, fupper = fhist[1][fidx].min(), fhist[1][fidx].max()
-                #Nhist = np.histogram(
-                    #result.flatchain['logN_ion'], bins=100, range=(10, 14))
-                #Nidx = np.where(Nhist[0] > Nhist[0].max()/2)
-                #Nlower, Nupper = Nhist[1][Nidx].min(), Nhist[1][Nidx].max()
                 flower, fupper = \
                     result.flatchain['f_c'].quantile(quantiles[0]), \
                     result.flatchain['f_c'].quantile(quantiles[1])

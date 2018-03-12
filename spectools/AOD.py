@@ -36,6 +36,7 @@ def fit_single_bin(flams, fluxes, errs, mc=True, method="nelder"):
     else:
         return MLE, result
 
+
 def brute_fit_bin(flams, fluxes, errs):
     covfrac = np.linspace(0., 1., 51)
     logN = np.linspace(10., 20., 51)
@@ -51,7 +52,7 @@ def brute_fit_bin(flams, fluxes, errs):
     # rlflx = 1. - CF * (1. - np.exp(tau))
     rlflx = aod(Flam, NC, CF)
     resid = (rlflx - fluxes)**2 / errs**2
-    chisq = (resid ** 2).sum(axis=2)# / len(fluxes)
+    chisq = np.nansum(resid ** 2, axis=2)  # .sum(axis=2)# / len(fluxes)
     # Now: best fit and marginalization
     minidx = np.where(chisq == chisq.min())
     confidx = np.where(chisq < chisq.min() + 1)
@@ -64,6 +65,7 @@ def brute_fit_bin(flams, fluxes, errs):
         covfrac[confidx[1]].max(),
         covfrac[confidx[1]].min()]
     return chisq, {'logN_ion': fitlogN, 'f_c': fitcf}
+
 
 def postprocess_fit(fitresult, mode):
     """ Placeholder and reminder, I need a function to do this"""
@@ -127,8 +129,12 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
     for i in range(fluxarr.shape[0]):
         vel = fittable["Velocity"][i]
         idx = np.where(np.invert(maskarr[i, :]))[0]  # Don't use masked points
-        print("\r", i+1,"/", fluxarr.shape[0], ", Datapoints: ", len(idx), end="")
+        if verbose:
+            print(i+1, "/", fluxarr.shape[0], "Velocity: ", vel,
+                  ", Datapoints: ", len(idx))#, end="")
         if len(idx) < 2:
+            if verbose:
+                print("Skipping bin no. {}, only {} datapoints".format(i, len(idx)))
             reslines.append([vel, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
             fitresults.append(None)
             continue
@@ -190,7 +196,8 @@ fikdict = {
     'Si IV 1122': 0.807,
     'Si IV 1393': 0.513,
     'Si IV 1402': 0.255,
-    'Si II 1526': 0.133
+    'Si II 1526': 0.133,
+    'Si II 1808': 0.00278,  # .78E-03,
 }
 
 wlsdict = {
@@ -199,6 +206,7 @@ wlsdict = {
     'Si II 1193': 1193.2897,
     'Si III 1206': 1206.4995,
     'Si II 1260': 1260.4221,
+    'Si II 1808': 1808.0126,
     'O I 1302': 1302.16848,
     'Si II 1304': 1304.3702,
     'C II 1334': 1334.5323,

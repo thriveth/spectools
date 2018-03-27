@@ -4,6 +4,7 @@
 import lmfit as lm
 import numpy as np
 from astropy.table import Table
+import matplotlib.pyplot as plt
 
 def aod(flam, logN_ion, f_c):
     """ Returns flux as function of f*lambda, column density and covering
@@ -38,8 +39,8 @@ def fit_single_bin(flams, fluxes, errs, mc=True, method="nelder"):
 
 
 def brute_fit_bin(flams, fluxes, errs):
-    covfrac = np.linspace(0., 1., 51)
-    logN = np.linspace(10., 20., 51)
+    covfrac = np.linspace(0., 1., 101)
+    logN = np.linspace(10., 20., 101)
     chisqarr = np.ones((len(covfrac), len(logN)))
     CF, NC = np.meshgrid(covfrac, logN)
     Flam = flams.reshape(1, 1, -1)
@@ -64,7 +65,7 @@ def brute_fit_bin(flams, fluxes, errs):
         covfrac[minidx[1]][0],
         covfrac[confidx[1]].max(),
         covfrac[confidx[1]].min()]
-    return chisq, {'logN_ion': fitlogN, 'f_c': fitcf}
+    return chisq, {'logN_ion': fitlogN, 'f_c': fitcf,}
 
 
 def postprocess_fit(fitresult, mode):
@@ -181,6 +182,77 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
         restable["Fitters"] = fitresults
     return restable
 
+def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
+    """ Must have two axes
+    """
+    velocity = intable['Velocity'][binnum]
+    print('Velocity = {} km/s'.format(velocity))
+    if axes is None:
+        fig, axes = plt.subplots(1, 2, figsize=(7, 3.5), sharey=True)
+    if len(axes) != 2:
+        raise ValueError('Exactly two axes, if any, must be passed')
+    ax1, ax2 = axes[0], axes[1]
+    flams, fluxes, errs = [], [], []
+    for line in intable.colnames:
+        linname = " ".join(line.split(" ")[:-1])
+        if not line.startswith('Si'):
+            continue                   # Ugly hack
+        if not line.endswith('flux') or line == 'Velocity':
+            continue
+        fiklam = fikdict[linname] * wlsdict[linname]
+        flams.append(fiklam)
+        flux = intable[line][binnum]
+        fluxes.append(flux)
+        stddev = intable[linname+" errs"][binnum]
+        errs.append(stddev)
+        print(line)
+        ax1.plot(
+            intable['Velocity'],
+            intable[line],
+            drawstyle='steps-mid', label=linname)
+        ax2.errorbar(
+            fiklam,
+            intable[line][binnum],
+            intable[linname+" errs"][binnum],
+            marker='o', ms=10, capsize=3
+        )
+    ax1.axvline(velocity, color='0.6', lw=1.4, ls=':', label='Bin')
+    ax1.legend(loc='lower left', fontsize='x-small', framealpha=1).draggable()
+    ax1.axis((-1500, 1000, -.1, 1.4))
+    ## Now the stuff that is actually AOD, in ax2
+    FikLams = np.linspace(0, 1700, 100)
+    best_fit = brute_fit_bin(np.array(flams), np.array(fluxes), np.array(errs))[1]
+    print(best_fit['logN_ion'])
+    print(best_fit['f_c'])
+    binstring = "Bin No. {}, ".format(binnum)
+    velstring = "Velocity = {:.0f} km/s".format(velocity)
+    logNstring = r"$\log_{10}N = "\
+        + "{:.2f}".format(best_fit['logN_ion'][0])\
+        + r"^{"\
+        + "+{:.2f}".format(best_fit['logN_ion'][1]-best_fit['logN_ion'][0])\
+        + r"}_{" \
+        + "-{:.2f}".format(best_fit['logN_ion'][0]-best_fit['logN_ion'][2])\
+        + r"}$"
+    fCstring = r"$f_C = "\
+        + "{:.2f}".format(best_fit['f_c'][0])\
+        + r"^{"+"+{:.2f}".format(best_fit['f_c'][1]-best_fit['f_c'][0])\
+        + r"}_{"+"-{:.2f}".format(best_fit['f_c'][0]-best_fit['f_c'][2])\
+        + r"}$"
+    s = "\n".join([binstring+velstring, logNstring, fCstring])
+    ax2.annotate(s, (0.08, 0.77), xycoords='axes fraction', size='small')
+    bestcurve = aod(FikLams, best_fit['logN_ion'][0], best_fit['f_c'][0])
+    locurve = aod(FikLams, LologN, 1)
+    hicurve = aod(FikLams, HilogN, .5)
+    ax2.plot(FikLams, locurve, ':', color='.5')
+    ax2.plot(FikLams, hicurve, ':', color='.5')
+    ax2.plot(FikLams, bestcurve, 'k-', zorder=1)
+    # Visual guides for both axes
+    for ax in ax1, ax2:
+        ax.axvline(0, color='k', lw=.8, ls='--')
+        ax.axhline(0, color='k', lw=1)
+        ax.axhline(1, color='k', ls='--', lw=.8)
+
+    return axes
 
 def show_phase(intable, bounds=None):
     # TODO Implement the rest!

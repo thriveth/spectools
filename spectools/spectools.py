@@ -167,7 +167,7 @@ class GalaxySpectrum(object):
 
     def save_summary(self, path, file_format='yml'):
         linelist = [t.name for t in self.transitions.values()]
-        preamble = """This is the summary for galaxy {}, containing the lines
+        preamble = """# This is the summary for galaxy {}, containing the lines
         """.format(self.objname) + str(linelist)
         if file_format.lower() in ['y', 'yml', 'yaml']:
             preamble = tw.fill(preamble, width=78, subsequent_indent="# ")
@@ -357,14 +357,22 @@ class Transition(object):
             },
             # Exclude resampled versions? Redundant but useful.
             'wave': None if self.data is None else self.wave.value.tolist(),
-            'wave_resampled': None if self.data is None else self.wave_resampled.tolist(),
+            'wave_resampled':
+                None if self.data is None else self.wave_resampled.tolist(),
             'velocity': None if self.data is None else self.velocity.tolist(),
-            'velocity_resampled': None if self.data is None else self.velocity_resampled.tolist(),
+            'velocity_resampled':
+                None if self.data is None else self.velocity_resampled.tolist(),
             'data': None if self.data is None else self.data.value.tolist(),
-            'data_resampled': None if self.data is None else self.data_resampled.tolist(),
+            'data_resampled':
+                None if self.data is None else self.data_resampled.tolist(),
+            'errs': None if self.errs is None else self.errs.tolist(),
+            'errs_resampled':
+                None if self.errs_resampled is None else self.errs_resampled.tolist(),
             'mask': None if self.mask is None else self.mask.tolist(),
-            'mask_resampled': None if self.mask is None else self.mask_resampled.tolist(),
-            'continuum_fit_include': None if not self.fitted else self.cont_fit_include.tolist(),
+            'mask_resampled':
+                None if self.mask is None else self.mask_resampled.tolist(),
+            'continuum_fit_include':
+                None if not self.fitted else self.cont_fit_include.tolist(),
             'continuum_fit_params': fitpars,
         }
         return D

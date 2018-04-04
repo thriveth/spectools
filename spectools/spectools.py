@@ -208,14 +208,13 @@ class Transition(object):
     fitted = False
     fitter = None  # Placeholder for fitting result
     z = 0
-    # Base quantities: assumed type is astropy.Quantity
+    # The following are Base quantities, assumed type is astropy.Quantity
     # Other quantities are numbers, assuming the relevant units e inherited.
-    #mask = None    # Boolean mask
     vac_wl = None  # *Restframe* wavelength in vacuum
     air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
     wave = None    # Should later become array of *observed* wavelengths.
     data = None    #  -"- data
-    errs = None    #  -"- errors
+    errs = None    #  -"- errors TODO Should this be a Quantity or array?
 
     @property
     def centroid(self):
@@ -268,12 +267,12 @@ class Transition(object):
     @property
     def errs_resampled(self):
         # NB! This does not strictly treat errors correctly, but it is good
-        # enough for our purposed.
+        # enough for our purposes.
         if self.reference_transition is None:
-            return self.errs
+            return self.errs.value
         else:
             newerrs = np.interp(
-                self.velocity_resampled, self.velocity, self.errs
+                self.velocity_resampled, self.velocity, self.errs.value
             )
             return newerrs
 

@@ -187,6 +187,7 @@ class GalaxySpectrum(object):
         for t in summary['transitions']:
             T = Transition()
 
+
 class Transition(object):
     """ This object contains two kinds of information: Intrinsic information
     about the transition itself, and information about the observed propertiues
@@ -365,7 +366,7 @@ class Transition(object):
             'data': None if self.data is None else self.data.value.tolist(),
             'data_resampled':
                 None if self.data is None else self.data_resampled.tolist(),
-            'errs': None if self.errs is None else self.errs.tolist(),
+            'errs': None if self.errs is None else self.errs.value.tolist(),
             'errs_resampled':
                 None if self.errs_resampled is None else self.errs_resampled.tolist(),
             'mask': None if self.mask is None else self.mask.tolist(),
@@ -671,6 +672,7 @@ class SpecView(object):
         regression.
         """
         self.ax.set_zorder(self.altx.get_zorder()+1)
+
 
 class SimpleFitGUI(SpecView):
     """ Simple interactive GUI for fitting a model to a 1D spectrum.

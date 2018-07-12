@@ -9,7 +9,8 @@ from astropy.io import ascii
 import astropy.units as u
 from spectools.spectools import SimpleMaskGUI
 from statsmodels.nonparametric.kernel_regression import KernelReg
-from tqdm import tqdm
+from tqdm import tqdm_notebook as tqdm
+import tqdm as tq
 
 
 class DynVelGUI(SimpleMaskGUI):
@@ -26,24 +27,35 @@ class DynVelGUI(SimpleMaskGUI):
         pass
 
 
-def FWHM(wave, pertdata, mode='data'):
+def FWHM(wave, pertdata, mode='data', imin=False, ll_bw='cv_ls'):
     """ Mode can be data, ll, lc
     """
     fwhms = []
+    imins = []
+    mvels = []
+    LLEs = []
     for i in tqdm(range(pertdata.shape[0])):
         data = pertdata[i, :]
         if mode in ['ll', 'lc']:
-            lle = KernelReg(data, wave, 'c', reg_type=mode)
+            lle = KernelReg(data, wave, 'c', reg_type=mode, bw=ll_bw)
             data = lle.fit()[0]
+            LLEs.append(data)
+            print('LLE bandwidth: ', lle.bw[0], end="\r")
         iplwave = np.linspace(wave.min(), wave.max(), 1000)
         ipldata = np.interp(iplwave, wave, data)
         iplidx = np.where(ipldata > ipldata.max()/2)[0]
         vmin, vmax = iplidx.min(), iplidx.max()
         fwhms.append(iplwave[vmax] - iplwave[vmin])
+        if imin:
+            imins.append(1 - data.max())
+            mvels.append(iplwave[ipldata.argmax()])
+    if imin:
+        return np.array(fwhms), np.array(mvels), np.array(imins), np.array(LLEs)
     return np.array(fwhms)
 
 
-def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll'):
+def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll',
+           ll_bw='cv_ls'):
     """Computes a range of kinematic properties from a spectral line.
     The line is assumed continuum normalized.
     EW is given in km/s, as the function only knows velocity and flux.
@@ -74,9 +86,10 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll'):
     fifty = np.absolute(accu - 0.5).argmin(axis=1)
     ninetyfive = np.absolute(accu - 0.95).argmin(axis=1)
     # lledata =
-    fwhm = FWHM(wave, pertdata, mode=fwhm_mode)
-    mins = pertdata.argmax(axis=1)
-    imins = (1 - pertdata).min(axis=1)
+    fwhm, minvels, imins, LLEs = FWHM(
+        wave, pertdata, mode=fwhm_mode, imin=True, ll_bw=ll_bw)
+    # mins = pertdata.argmax(axis=1)
+    # imins = (1 - pertdata).min(axis=1)
     fivevels = np.array(
         [waves[i, five[i]] for i in np.arange(waves.shape[0])]
     )
@@ -90,28 +103,28 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll'):
         [waves[i, ninetyfive[i]] - waves[i, five[i]]
          for i in np.arange(waves.shape[0])]
     )
-    minvels = np.array(
-        [waves[i, mins[i]] for i in np.arange(waves.shape[0])]
-    )
+    # minvels = np.array(
+    #     [waves[i, mins[i]] for i in np.arange(waves.shape[0])]
+    # )
     # Now, find the various characteristic velocities
     minvel = {
-        'ml':minvels[0],
-        'mean':minvels[1:].mean(),
+        'ml': minvels[0],
+        'mean': minvels[1:].mean(),
         'percentiles': np.percentile(minvels[1:], [2.5, 16, 50, 84, 97.5]),
-        'stddev':minvels[1:].std()
+        'stddev': minvels[1:].std()
     }
     fivevel = {
         'ml': fivevels[0],
         'mean': fivevels[1:].mean(),
         'stddev': fivevels[1:].std(),
         'percentiles': np.percentile(fivevels[1:], [2.5, 16, 50, 84, 97.5]),
-        #'realizations': fivevels,
+        # 'realizations': fivevels,
     }
     fiftyvel = {
         'ml': fiftyvels[0],
         'mean': fiftyvels[1:].mean(),
         'percentiles': np.percentile(fiftyvels[1:], [2.5, 16, 50, 84, 97.5]),
-        'stddev':fiftyvels[1:].std()
+        'stddev': fiftyvels[1:].std()
     }
     ninetyfivevel = {
         'ml': ninetyfivevels[0],
@@ -138,9 +151,10 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll'):
         'stddev': fwhm[1:].std(),
         'mode': fwhm_mode,
     }
+    lleout = {'LLEs': LLEs}
     outdict = {
         # 'EW': EW,
-        'iterations':iterations,
+        'iterations': iterations,
         'imin': imin,
         'vmin': minvel,
         'v5pct': ninetyfivevel,
@@ -152,6 +166,7 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll'):
         'cumsum': accu,
         'Velocity': wave,
         'fwhm': fwhmout,
+        'LLE': lleout,
     }
     return outdict
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='spectools',
-    version='0.1.2',
+    version='0.1.3',
     description='Helpers for 1D astrophysical spectroscopy',
     url='https://github.com/thriveth/spectools/',
     author='T. E. Rivera-Thorsen',

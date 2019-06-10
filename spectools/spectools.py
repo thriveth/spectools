@@ -1229,9 +1229,51 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
     return view
 
 
+def load_galaxy_summary(galaxy, path):
+    """
+    CAUTION: This function alters its input.
+
+    Param `galaxy` must be spectools GalaxySpec object
+    """
+    summary = read_summary(path)
+    galaxy.objname = summary['galaxyname']
+    galaxy.z = summary['redshift']
+    if 'dataunit' in summary.keys():
+        galaxy.dataunit = u.Unit(summary['dataunit'])
+    if 'frequnit' in summary.keys():
+        galaxy.frequnit = u.Unit(summary['frequnit'])
+    if 'waveunit' in summary.keys():
+        galaxy.waveunit = u.Unit(summary['waveunit'])
+    if 'velunit' in summary.keys():
+        galaxy.velunit = u.Unit(summary['velunit'])
+    rts = []
+    dep_transitions = []
+    for line in summary['transitions'].keys():
+        if "reference_transition" in summary["transitions"][line].keys():
+            # For backward compatibility
+            rt = summary["transitions"][line]["reference_transition"]
+        else:
+            # The modern way
+            rt = summary["transitions"][line]["reference_transition_name"]
+        if rt is not None:
+            dep_transitions.append((line, rt))
+            continue
+        tmp = galaxy.add_transition(line)
+        tmp.load_line_summary(summary['transitions'][line])
+        rts.append(rt)
+
+    for line, rt in dep_transitions:
+        tmp = galaxy.add_transition(line, ref_transition=galaxy.transitions[rt])
+        tmp.load_line_summary(summary["transitions"][line])
+
+
 def load_summary(galspec, path):
-    "Caution: This fundtion alters its input"
-    return
+    """
+    Alias for load_galaxy_summary.
+    Caution: This fundtion alters its input
+    """
+    load_galaxy_summary(galspec, path)
+
 
 def read_summary(path):
     with open(path, 'r') as f:

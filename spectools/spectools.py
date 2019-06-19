@@ -381,7 +381,7 @@ class Transition(object):
                 None if self.mask is None else self.mask_resampled.tolist(),
             'cont_fit_include': np.array(self.cont_fit_include).tolist(),
             # None if not self.fitted else self.cont_fit_include.tolist(),
-            'cont_fit_params': self.cont_fit_params,  # fitpars,
+            'cont_fit_params': fitpars,  # self.cont_fit_params,  # fitpars,
             'z': self.z,
         }
         return D
@@ -1277,5 +1277,5 @@ def load_summary(galspec, path):
 
 def read_summary(path):
     with open(path, 'r') as f:
-        y = yaml.load(f)
+        y = yaml.full_load(f)
     return y

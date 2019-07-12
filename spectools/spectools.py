@@ -382,7 +382,7 @@ class Transition(object):
             'cont_fit_include': np.array(self.cont_fit_include).tolist(),
             # None if not self.fitted else self.cont_fit_include.tolist(),
             'cont_fit_params': fitpars,  # self.cont_fit_params,  # fitpars,
-            'z': self.z,
+            'z': float(self.z),
         }
         return D
 
@@ -965,7 +965,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.wave = transition.velocity#.value
         self.mask = np.zeros_like(
             self.transition.velocity).astype(bool)
-        self.fig, self.ax = plt.subplots(1)
+        self.fig, self.ax = plt.subplots(1, figsize=(8, 5))
         self._build_plot()
         if showlines:
             add_line_markers(self, ls='--', wave='vel')
@@ -995,7 +995,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             drawstyle='steps-mid',
             label=self.transition.name
         )[0]
-        self.ax.set_xlim(-2000, 2000)
+        self.ax.set_xlim(-3000, 3000)
         self.ax.fill_between(
             self.transition.velocity,
             self.transition.errs,#.value,
@@ -1003,7 +1003,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         )
         # print(np.median(self.data))
         self.ax.axhline(1, color='k', ls='--', lw=.8)
-        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.data) * 2.)
+        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.data.value) * 3.)
         axshw = self.fig.add_axes([0.91, 0.82, 0.08, 0.06])
         axclr = self.fig.add_axes([0.91, 0.75, 0.08, 0.06])
         ax_ok = self.fig.add_axes([0.91, 0.68, 0.08, 0.06])

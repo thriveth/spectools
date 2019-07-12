@@ -47,11 +47,13 @@ class LyaGUI(SimpleFitGUI):
         self.mask = inmask
         if summaryfile:
             self.open_summary(summaryfile)
-        # Interpolate masked areas
-        self.data[self.mask] = np.nan
-        self.nonnanidx = np.where(~self.mask)[0]
-        self.interp = np.interp(
-            self.wave, self.wave[self.nonnanidx], self.data[self.nonnanidx])
+            # Interpolate masked areas
+            self.data[self.mask] = np.nan
+            self.nonnanidx = np.where(~self.mask)[0]
+            self.interp = np.interp(
+                self.wave, self.wave[self.nonnanidx], self.data[self.nonnanidx])
+            self.interr = np.interp(
+                self.wave, self.wave[self.nonnanidx], self.errs[self.nonnanidx])
         if smooth == 'll':
             lle = KernelReg(self.interp, self.wave, 'c', bw=[10])
             mean, marg = lle.fit()
@@ -71,9 +73,12 @@ class LyaGUI(SimpleFitGUI):
         self.z = summary['redshift']
         self.galaxy_name = summary['galaxyname']
         self.data = np.array(summary['transitions']['Ly alpha']['data'])
-        # self.errors = np.array(summary['transitions']['Ly alpha']['errs'])
+        self.errs = np.array(summary['transitions']['Ly alpha']['errs'])
         self.wave = np.array(summary['transitions']['Ly alpha']['wave'])
         self.mask = np.array(summary['transitions']['Ly alpha']['mask'])
+        self._cfp = summary['transitions']['Ly alpha']['cont_fit_params']
+        self._cont = self.wave * self._cfp['slope'] + self._cfp['intercept']
+
 
     def _build_plot(self):
         self.fig = plt.figure(figsize=(8, 4))
@@ -137,7 +142,6 @@ class LyaGUI(SimpleFitGUI):
         self.radio = RadioButtons(self.rax, rlabels)
         plt.draw()
 
-
     def measure_flux(self, xmin, xmax, iters=1):
         idx = np.where((self.wave > xmin) & (self.wave < xmax))
         wav = self.wave[idx]
@@ -146,36 +150,59 @@ class LyaGUI(SimpleFitGUI):
         fluxes, vmaxs, vmins, fwhms = [], [], [], []
         bhms, rhms, asymmetry = [], [], []
         fmax, fmin = [], []
-        if self.errors is not None:
-            for i in range(iters):
-                perturb = np.array(
-                    [np.random.normal(scale=e) for e in self.errors[idx]])
-                if i > 0:
-                    pertdata = dat + perturb
-                else:
-                    pertdata = dat
-                # fluxes.append(((pertdata - 1) * self._wave_diffs[idx]).sum())
-                fluxes.append(((pertdata) * self._wave_diffs[idx]).sum())
-                vmaxs.append(vel[dat.argmax()])
-                vmins.append(vel[dat.argmin()])
-                cumflux = np.cumsum(pertdata - 1)
-                # cumflux = np.cumsum(pertdata)
-                q05 = vel[np.absolute(cumflux / cumflux.max() - 0.05).argmin()]
-                q50 = vel[np.absolute(cumflux / cumflux.max() - 0.50).argmin()]
-                q95 = vel[np.absolute(cumflux / cumflux.max() - 0.95).argmin()]
-                A = (q95 - q50) / (q50 - q05)
-                asymmetry.append(A)
-                fwidx = np.where(pertdata - 1 > (pertdata - 1).max()/2)[0]
-                bhm = vel[fwidx.min()]
-                rhm = vel[fwidx.max()]
-                bhms.append(bhm)
-                rhms.append(rhm)
-                fmax.append((pertdata-1).max())
-                fmin.append((pertdata-1).min())
-                # fmax.append((pertdata).max())
-                # fmin.append((pertdata).min())
-                fwhms.append(rhm-bhm)
+        if self.errs is None:
+            iters = 1
+        for i in range(iters):
+            perturb = np.array(
+                [np.random.normal(scale=e) for e in self.errs[idx]])
+            if i > 0:
+                pertdata = dat + perturb
+            else:
+                pertdata = dat
+            # fluxes.append(((pertdata - 1) * self._wave_diffs[idx]).sum())
+            fluxes.append(((pertdata) * self._wave_diffs[idx]).sum())
+            vmaxs.append(vel[dat.argmax()])
+            vmins.append(vel[dat.argmin()])
+            cumflux = np.cumsum(pertdata - 1)
+            # cumflux = np.cumsum(pertdata)
+            q05 = vel[np.absolute(cumflux / cumflux.max() - 0.05).argmin()]
+            q50 = vel[np.absolute(cumflux / cumflux.max() - 0.50).argmin()]
+            q95 = vel[np.absolute(cumflux / cumflux.max() - 0.95).argmin()]
+            A = (q95 - q50) / (q50 - q05)
+            asymmetry.append(A)
+            fwidx = np.where(pertdata - 1 > (pertdata - 1).max()/2)[0]
+            bhm = vel[fwidx.min()]
+            rhm = vel[fwidx.max()]
+            bhms.append(bhm)
+            rhms.append(rhm)
+            fmax.append((pertdata-1).max())
+            fmin.append((pertdata-1).min())
+            # fmax.append((pertdata).max())
+            # fmin.append((pertdata).min())
+            fwhms.append(rhm-bhm)
         return fluxes, vmaxs, vmins, fwhms, bhms, rhms, asymmetry, fmin, fmax
+
+    def absolute_flux(self, xmin=None, xmax=None, iters=1):
+        afs = []
+        afarray = (self.interp - 1) * self._cont
+        aferrar = (self.interr) * self._cont
+        if xmin:
+            afarray[self.wave < xmin] = 0
+        if xmax:
+            afarray[self.wave > xmax] = 0
+        if self.errs is None:
+            iters = 1
+        for i in range(iters):
+            if i == 0:
+                pertdata = afarray
+            else:
+                perturb = np.array(
+                    [np.random.normal(scale=e) for e in np.absolute(aferrar)])
+                pertdata = afarray + perturb
+            afs.append((afarray * self._wave_diffs).sum())
+        self.summary_dict['AbsFlux'] = np.percentile(afs, [2.5, 16, 50, 84, 97.5])
+        return self.summary_dict['AbsFlux']  # np.atleast_1d(afs)
+
 
     def fit_red(self, xmin, xmax):
         self._selector.rectprops['facecolor'] = 'tab:red'

@@ -79,7 +79,6 @@ class LyaGUI(SimpleFitGUI):
         self._cfp = summary['transitions']['Ly alpha']['cont_fit_params']
         self._cont = self.wave * self._cfp['slope'] + self._cfp['intercept']
 
-
     def _build_plot(self):
         self.fig = plt.figure(figsize=(8, 4))
         self.ax = self.fig.add_axes([0.08, 0.08, 0.8, 0.8])
@@ -202,6 +201,26 @@ class LyaGUI(SimpleFitGUI):
             afs.append((afarray * self._wave_diffs).sum())
         self.summary_dict['AbsFlux'] = np.percentile(afs, [2.5, 16, 50, 84, 97.5])
         return self.summary_dict['AbsFlux']  # np.atleast_1d(afs)
+
+    def equivalent_width(self, xmin=None, xmax=None, iters=1):
+        ews = []
+        ewarray, ewerrar = (self.interp - 1), self.interr
+        if xmin:
+            ewarray[self.wave < xmin] = 0
+        if xmax:
+            ewarray[self.wave > xmax] = 0
+        if self.errs is None:
+            iters = 1
+        for i in range(iters):
+            if i == 0:
+                pertdata = ewarray
+            else:
+                perturb = np.array(
+                    [np.random.normal(scale=e) for e in np.absolute(ewerrar)])
+                pertdata = ewarray + perturb
+            ews.append((ewarray * self._wave_diffs).sum())
+        self.summary_dict['EW_lya'] = np.percentile(ews, [2.5, 16, 50, 84, 97.5])
+        return self.summary_dict['EW_lya']
 
 
     def fit_red(self, xmin, xmax):

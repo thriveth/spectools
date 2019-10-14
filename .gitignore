@@ -3,6 +3,7 @@ __pycache__
 .mypy_cache
 undo
 .ropeproject
+.mypy_cache
 
 # Sky lines - maybe make its own little repo?
 skylines

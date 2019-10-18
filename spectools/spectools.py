@@ -142,7 +142,12 @@ class GalaxySpectrum(object):
     @property
     def summary_dict(self):
         sd = {}
-        sd['transitions'] = {t:self.transitions[t].summary_dict for t in self.transitions}
+        # sd['datatable'] = self.datatable
+        sd['waveunit'] = str(self.waveunit) if self.waveunit else ""
+        sd['velunit'] = str(self.velunit) if self.velunit else ""
+        sd['frequnit'] = str(self.frequnit) if self.frequnit else ""
+        sd['dataunit'] = str(self.dataunit) if self.dataunit else ""
+        sd['transitions'] = {t: self.transitions[t].summary_dict for t in self.transitions}
         sd['galaxyname'] = self.objname
         sd['redshift'] = float(self.z)
         return sd
@@ -198,23 +203,25 @@ class Transition(object):
     little confusing, but it should have some logic to it, and it works.
     """
     # Metadata
-    name = None
-    galaxyname = None
-    cont_fit_params = None
-    cont_fit_include = None
-    reference_transition = None  # Should be string
-    masked = False
-    _mask = None
-    fitted = False
-    fitter = None  # Placeholder for fitting result
-    z = 0
-    # The following are Base quantities, assumed type is astropy.Quantity
-    # Other quantities are numbers, assuming the relevant units e inherited.
-    vac_wl = None  # *Restframe* wavelength in vacuum
-    air_wl = None  # Scrap? Air conversion should be handled by galspec, keyá?
-    wave = None    # Should later become array of *observed* wavelengths.
-    data = None    #  -"- data
-    errs = None    #  -"- errors TODO Should this be a Quantity or array?
+    def __init__(self):
+        self.name = None
+        self.dataunit = u.Unit('')
+        self.waveunit = u.Unit('')
+        self.galaxyname = None
+        self.cont_fit_params = None
+        self.cont_fit_include = None
+        self.reference_transition = None  # Should be string
+        self.masked = False
+        self._mask = None
+        self.fitted = False
+        self.fitter = None  # Placeholder for fitting result
+        self.z = 0
+        # The following are Base quantities, assumed type is astropy.Quantity
+        # Other quantities are numbers, assuming the relevant units are inherited.
+        self.vac_wl = None  # np.nan * u.Unit('')  # *Restframe* wavelength in vacuum
+        self.wave = None  # np.array([]) * u.Unit('')   # Should later become array of *observed* wavelengths.
+        self.data = None  # np.array([]) * u.Unit('')    #  -"- data
+        self.errs = None  # np.array([]) * u.Unit('')    #  -"- errors TODO Should this be a Quantity or array?
 
     @property
     def centroid(self):
@@ -327,13 +334,13 @@ class Transition(object):
             )
         return p
 
-    def load_summary(self):
-        raise NotImplementedError(
-            "This feature is planned, but not yet implemented"
-        )
+    def load_summary(self, path):
+        """ Alias for load_line_summary()"""
+        self.load_line_summary(path)
 
     @property
     def summary_dict(self):
+        # print(self.reference_transition)
         if self.reference_transition:
             refname = self.reference_transition.name
         else:
@@ -350,7 +357,8 @@ class Transition(object):
 
         D = {
             'name': self.name,
-            'reference_transition': refname,
+            'galaxyname': self.galaxyname,
+            'reference_transition_name': refname,
             'vac_wl': {
                 'value': self.vac_wl.value,
                 'unit': self.vac_wl.unit.to_string()
@@ -371,9 +379,10 @@ class Transition(object):
             'mask': None if self.mask is None else self.mask.tolist(),
             'mask_resampled':
                 None if self.mask is None else self.mask_resampled.tolist(),
-            'continuum_fit_include':
-                None if not self.fitted else self.cont_fit_include.tolist(),
-            'continuum_fit_params': fitpars,
+            'cont_fit_include': np.array(self.cont_fit_include).tolist(),
+            # None if not self.fitted else self.cont_fit_include.tolist(),
+            'cont_fit_params': fitpars,  # self.cont_fit_params,  # fitpars,
+            'z': float(self.z),
         }
         return D
 
@@ -388,7 +397,45 @@ class Transition(object):
                 json.dump(self.summary_dict, f, indent=2)
 
     def load_line_summary(self, summary):
-        """ Summary datatype is a dict, loaded fro yaml file."""
+        """ Summary datatype is a dict, loaded from yaml file."""
+        self.name = summary['name']
+        params = [
+            "name", "vac_wl", "z",
+            "wave", "data", "errs", "mask",
+            "reference_transition_name",
+            "cont_fit_include", "cont_fit_params",
+            "continuum_fit_include", "continuum_fit_params",  # For backward compatibility
+            "waveunit", "dataunit",
+        ]
+
+        for par in params:
+            # print(par, par in summary.keys())
+            if par not in summary.keys():
+                continue
+            if par == "mask":
+                self._mask = np.array(summary["mask"])
+                self.masked = True
+            elif par == "vac_wl":
+                self.vac_wl = \
+                    summary['vac_wl']['value'] * u.Unit(summary['vac_wl']['unit'])
+            elif par == "dataunit":
+                self.dataunit = u.Unit(summary[par])
+                self.errsunit = u.Unit(summary[par])
+            elif par == "waveunit":
+                self.wave *= u.Unit(summary[par])
+            elif "continuum" in par:
+                oldpar = par
+                par = par.replace("inuum", "")
+                self.__dict__.update({par: summary[oldpar]})  # [par] == summary[par]
+            else:
+                self.__dict__.update({par: summary[par]})  # [par] == summary[par]
+
+        self.data = np.array(self.data) * self.dataunit
+        self.errs = np.array(self.errs) * self.dataunit
+        self.wave = np.array(self.wave) * self.waveunit
+
+
+
 
 
 class SpecView(object):
@@ -918,7 +965,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         self.wave = transition.velocity#.value
         self.mask = np.zeros_like(
             self.transition.velocity).astype(bool)
-        self.fig, self.ax = plt.subplots(1)
+        self.fig, self.ax = plt.subplots(1, figsize=(8, 5))
         self._build_plot()
         if showlines:
             add_line_markers(self, ls='--', wave='vel')
@@ -948,7 +995,7 @@ class SimpleMaskGUI(SimpleFitGUI):
             drawstyle='steps-mid',
             label=self.transition.name
         )[0]
-        self.ax.set_xlim(-2000, 2000)
+        self.ax.set_xlim(-3000, 3000)
         self.ax.fill_between(
             self.transition.velocity,
             self.transition.errs,#.value,
@@ -956,7 +1003,7 @@ class SimpleMaskGUI(SimpleFitGUI):
         )
         # print(np.median(self.data))
         self.ax.axhline(1, color='k', ls='--', lw=.8)
-        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.data) * 2.)
+        self.ax.set_ylim(bottom=0., top=np.nanmedian(self.data.value) * 3.)
         axshw = self.fig.add_axes([0.91, 0.82, 0.08, 0.06])
         axclr = self.fig.add_axes([0.91, 0.75, 0.08, 0.06])
         ax_ok = self.fig.add_axes([0.91, 0.68, 0.08, 0.06])
@@ -1134,12 +1181,20 @@ def add_transition(galaxy_spectrum, transname, ref_transition=None):
     t.name = transname
     t.galaxyname = galaxy_spectrum.objname
     t.z = galaxy_spectrum.z if galaxy_spectrum else 0
-    t.vac_wl = MWlines[transname] * galaxy_spectrum.datatable['wave'].unit
+    # t.vac_wl = MWlines[transname] * galaxy_spectrum.datatable['wave'].unit
+    t.dataunit = u.Unit('') if galaxy_spectrum.dataunit is None else galaxy_spectrum.dataunit
+    # print(t.dataunit)
+    # t.dataunit = dataunit
+    t.waveunit = galaxy_spectrum.waveunit if galaxy_spectrum else u.Unit('')
+    # print(type(t.waveunit), t.waveunit)
+    # t.waveunit = waveunit
+    t.vac_wl = (MWlines[transname] * u.Angstrom).to(galaxy_spectrum.waveunit)
     if galaxy_spectrum.transitions is None:
         galaxy_spectrum.transitions = {}
     if ref_transition is not None:
         t.reference_transition = ref_transition
     galaxy_spectrum.transitions[transname] = t
+    print("Successfully added the transition {}.\n".format(transname))
     return t
 
 
@@ -1174,7 +1229,53 @@ def add_line_markers(view, color1='C0', color2='C2', wave='wave', **kwargs):
     return view
 
 
+def load_galaxy_summary(galaxy, path):
+    """
+    CAUTION: This function alters its input.
+
+    Param `galaxy` must be spectools GalaxySpec object
+    """
+    summary = read_summary(path)
+    galaxy.objname = summary['galaxyname']
+    galaxy.z = summary['redshift']
+    if 'dataunit' in summary.keys():
+        galaxy.dataunit = u.Unit(summary['dataunit'])
+    if 'frequnit' in summary.keys():
+        galaxy.frequnit = u.Unit(summary['frequnit'])
+    if 'waveunit' in summary.keys():
+        galaxy.waveunit = u.Unit(summary['waveunit'])
+    if 'velunit' in summary.keys():
+        galaxy.velunit = u.Unit(summary['velunit'])
+    rts = []
+    dep_transitions = []
+    for line in summary['transitions'].keys():
+        if "reference_transition" in summary["transitions"][line].keys():
+            # For backward compatibility
+            rt = summary["transitions"][line]["reference_transition"]
+        else:
+            # The modern way
+            rt = summary["transitions"][line]["reference_transition_name"]
+        if rt is not None:
+            dep_transitions.append((line, rt))
+            continue
+        tmp = galaxy.add_transition(line)
+        tmp.load_line_summary(summary['transitions'][line])
+        rts.append(rt)
+
+    for line, rt in dep_transitions:
+        tmp = galaxy.add_transition(line, ref_transition=galaxy.transitions[rt])
+        tmp.load_line_summary(summary["transitions"][line])
+
+
+def load_summary(galspec, path):
+    """
+    Alias for load_galaxy_summary.
+    Caution: This fundtion alters its input
+    """
+    load_galaxy_summary(galspec, path)
+
+
 def read_summary(path):
     with open(path, 'r') as f:
-        y = yaml.load(f)
+        y = yaml.full_load(f)
     return y

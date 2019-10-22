@@ -182,6 +182,7 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
         restable["Fitters"] = fitresults
     return restable
 
+
 def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
     """ Must have two axes
     """
@@ -217,7 +218,11 @@ def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
             marker='o', ms=10, capsize=3
         )
     ax1.axvline(velocity, color='0.6', lw=1.4, ls=':', label='Bin')
-    ax1.legend(loc='lower left', fontsize='x-small', framealpha=1).draggable()
+    ax1.legend(
+        loc='lower left',
+        fontsize='x-small',
+        framealpha=1).set_draggable(True)
+
     ax1.axis((-1500, 1000, -.1, 1.4))
     ## Now the stuff that is actually AOD, in ax2
     FikLams = np.linspace(0, 1700, 100)
@@ -253,6 +258,7 @@ def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
         ax.axhline(1, color='k', ls='--', lw=.8)
 
     return axes
+
 
 def show_phase(intable, bounds=None):
     # TODO Implement the rest!

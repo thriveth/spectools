@@ -3,8 +3,8 @@
 
 import warnings
 import json
-import yaml
 import textwrap as tw
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, SpanSelector
@@ -14,8 +14,10 @@ from astropy.modeling import fitting, models
 import astropy.constants as c
 import astropy.units as u
 import lmfit as lm
-from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum, vacuum_to_air
+from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum
+from .helper_functions import vacuum_to_air, equivalent_width
 from .linelists import lislines, wlsdict, MWlines
+import skylines.uves_sky_atlas as usa
 
 class BaseGUI(object):
     def __init__(self):

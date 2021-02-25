@@ -38,8 +38,8 @@ def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
     return ax
 
 def abund_sequence(z):
-    """ Draws the Star formation abundance tracks of Kewley+ 2013 (eq. 5) as a
-    function of redshift.
+    """ Computes the Star formation abundance tracks of Kewley+ 2013 (eq. 5),
+    for use in a N2/Ha vs. O3/Hb BPT diagram, as a function of redshift.
     """
     # TODO: Needs to fix the limits of interval of definition somehow, it
     # changes with redshift and plots ugly artifacts when not correct.

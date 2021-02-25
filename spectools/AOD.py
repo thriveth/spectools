@@ -182,6 +182,7 @@ def fit_range(intable, bounds=None, mc=True, verbose=False, fitmethod='lmfit',
         restable["Fitters"] = fitresults
     return restable
 
+
 def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
     """ Must have two axes
     """
@@ -217,7 +218,11 @@ def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
             marker='o', ms=10, capsize=3
         )
     ax1.axvline(velocity, color='0.6', lw=1.4, ls=':', label='Bin')
-    ax1.legend(loc='lower left', fontsize='x-small', framealpha=1).draggable()
+    ax1.legend(
+        loc='lower left',
+        fontsize='x-small',
+        framealpha=1).set_draggable(True)
+
     ax1.axis((-1500, 1000, -.1, 1.4))
     ## Now the stuff that is actually AOD, in ax2
     FikLams = np.linspace(0, 1700, 100)
@@ -254,6 +259,7 @@ def show_AOD_bin(intable, binnum, axes=None, HilogN=13, LologN=11.3, ):
 
     return axes
 
+
 def show_phase(intable, bounds=None):
     # TODO Implement the rest!
     showtable = prepare_fit_range(intable, bounds)
@@ -270,6 +276,8 @@ fikdict = {
     'Si IV 1402': 0.255,
     'Si II 1526': 0.133,
     'Si II 1808': 0.00278,  # .78E-03,
+    'S II 1250': 5.99E-03,
+    'S II 1253': 1.20E-02,
 }
 
 wlsdict = {
@@ -277,6 +285,8 @@ wlsdict = {
     'Si II 1190': 1190.4158,
     'Si II 1193': 1193.2897,
     'Si III 1206': 1206.4995,
+    'S II 1250': 1250.5845,
+    'S II 1253': 1253.8111,
     'Si II 1260': 1260.4221,
     'Si II 1808': 1808.0126,
     'O I 1302': 1302.16848,

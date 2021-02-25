@@ -1,0 +1,3 @@
+- Corrected the way transitions are added
+  
+  They would basically be wrong if not given in Ångström previously.

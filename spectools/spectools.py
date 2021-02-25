@@ -269,6 +269,7 @@ class Transition(object):
             dr = None
         else:
             dr = np.interp(self.velocity_resampled, self.velocity, self.data)
+            dr = dr.value
         return dr
 
     @property
@@ -360,7 +361,7 @@ class Transition(object):
             'galaxyname': self.galaxyname,
             'reference_transition_name': refname,
             'vac_wl': {
-                'value': self.vac_wl.value,
+                'value': self.vac_wl.value.tolist(),
                 'unit': self.vac_wl.unit.to_string()
             },
             # Exclude resampled versions? Redundant but useful.
@@ -796,7 +797,7 @@ class SimpleFitGUI(SpecView):
         self.ax.fill_between(
             self.galaxy.wave.value,
             self.galaxy.errs.data,
-            color='gray', alpha='.5'
+            color='gray', alpha=.5
         )
         # print(np.median(self.data))
         self.ax.axhline(1, color='k', ls='--')
@@ -1115,9 +1116,9 @@ def plot_lines(spectrum, ax=None, smooth=False, binning=False):
     for aa in ax0, ax1, ax2:
         aa.axhline(0, color='k', ls='--')
         aa.axvline(0, color='k', ls=':')
-    ax1.legend(framealpha=1.).draggable()
+    ax1.legend(framealpha=1.)  # .draggable()
     ax2.set_xlabel('Velocity [km s$^{-1}$]')
-    ax2.legend(framealpha=1.).draggable()
+    ax2.legend(framealpha=1.)  # .draggable()
     ax2.set_xlim(-1500, 1500)
     return
 

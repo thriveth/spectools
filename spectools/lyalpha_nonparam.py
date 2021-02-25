@@ -67,13 +67,14 @@ class LyaGUI(SimpleFitGUI):
         # TODO Fix summaries to contain errors. Unfortunately, that means
         # redoing the whole darn thing.... Sigh.
         with open(summary_file) as f:
-            summary = yaml.load(f)
+            summary = yaml.full_load(f)
         self.z = summary['redshift']
         self.galaxy_name = summary['galaxyname']
         self.data = np.array(summary['transitions']['Ly alpha']['data'])
-        # self.errors = np.array(summary['transitions']['Ly alpha']['errs'])
+        self.errors = np.array(summary['transitions']['Ly alpha']['errs'])
         self.wave = np.array(summary['transitions']['Ly alpha']['wave'])
         self.mask = np.array(summary['transitions']['Ly alpha']['mask'])
+        self._cont_fit_params = summary['transitions']['Ly alpha']
 
     def _build_plot(self):
         self.fig = plt.figure(figsize=(8, 4))
@@ -136,7 +137,6 @@ class LyaGUI(SimpleFitGUI):
         rlabels = self._peaks[np.where(self.check.get_status())]
         self.radio = RadioButtons(self.rax, rlabels)
         plt.draw()
-
 
     def measure_flux(self, xmin, xmax, iters=1):
         idx = np.where((self.wave > xmin) & (self.wave < xmax))

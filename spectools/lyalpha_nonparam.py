@@ -32,12 +32,14 @@ class LyaGUI(SimpleFitGUI):
     num_realizations = 1000
     z = 0.
     summary_dict = {}
+    cenwave = 1215.67 * (1+z)
 
     _current_peak = 'Red'
     _peaks = np.array(['Red', 'Blue', 'Valley'])
     _peak_on = np.array([True, True, True])
     _colors = {'Red': 'tab:red', 'Blue': 'tab:blue', 'Valley': '0.7'}
     _extra_plots = {}
+    _velocities = {}  # Just for use in plots
 
     def __init__(self, summaryfile=None, inwave=None, indata=None, inerrs=None,
                  inmask=None, smooth=None):
@@ -66,10 +68,9 @@ class LyaGUI(SimpleFitGUI):
         self._build_plot()
 
     def open_summary(self, summary_file):
-        # TODO Fix summaries to contain errors. Unfortunately, that means
-        # redoing the whole darn thing.... Sigh.
         with open(summary_file) as f:
-            summary = yaml.full_load(f)
+            summary = yaml.load(f)
+            # summary = yaml.full_load(f)
         self.z = summary['redshift']
         self.galaxy_name = summary['galaxyname']
         self.data = np.array(summary['transitions']['Ly alpha']['data'])
@@ -125,7 +126,20 @@ class LyaGUI(SimpleFitGUI):
 
     def _ok_clicked(self, event):
         self.save_summary()
-        plt.close(self.ax.figure)
+        self.ax.axvline(
+            v_to_wl(self.summary_dict['Red']['vpeak'][2], self.refwave),
+            ls='--', color='0.5')
+        self.ax.axvline(
+            v_to_wl(self._velocities['Red']['v05'], self.refwave),
+            ls='--', color='0.5')
+        self.ax.axvline(
+            v_to_wl(self._velocities['Red']['v50'], self.refwave),
+            ls='--', color='0.5')
+        self.ax.axvline(
+            v_to_wl(self._velocities['Red']['v95'], self.refwave),
+            ls='--', color='0.5')
+        self.ax.draw()
+            # plt.close(self.ax.figure)
 
     def _reset_clicked(self, event):
         self.summary_dict = {}
@@ -150,8 +164,9 @@ class LyaGUI(SimpleFitGUI):
         vel = wl_to_v(wav, self.refwave)
         dat = self.interp[idx]  # - 1
         fluxes, vmaxs, vmins, fwhms = [], [], [], []
-        bhms, rhms, asymmetry = [], [], []
+        bhms, rhms, asymmetry, asymGronKo = [], [], [], []
         fmax, fmin = [], []
+        v05, v50, v95 = [], [], []
         if self.errs is None:
             iters = 1
         for i in range(iters):
@@ -171,7 +186,12 @@ class LyaGUI(SimpleFitGUI):
             q50 = vel[np.absolute(cumflux / cumflux.max() - 0.50).argmin()]
             q95 = vel[np.absolute(cumflux / cumflux.max() - 0.95).argmin()]
             A = (q95 - q50) / (q50 - q05)
+            # Agk = (q95 - vel[pertdata.argmax()]) / (vel[pertdata.argmax()] - q05)
+            fpeak = cumflux[pertdata.argmax()]
+            ftot = cumflux.max()
+            Agk = (ftot-fpeak)/fpeak
             asymmetry.append(A)
+            asymGronKo.append(Agk)
             fwidx = np.where(pertdata - 1 > (pertdata - 1).max()/2)[0]
             bhm = vel[fwidx.min()]
             rhm = vel[fwidx.max()]
@@ -182,7 +202,15 @@ class LyaGUI(SimpleFitGUI):
             # fmax.append((pertdata).max())
             # fmin.append((pertdata).min())
             fwhms.append(rhm-bhm)
-        return fluxes, vmaxs, vmins, fwhms, bhms, rhms, asymmetry, fmin, fmax
+            v05.append(q05)
+            v95.append(q95)
+            v50.append(q50)
+        self._velocities[self.radio.value_selected] = {
+            'v05': np.median(v05),
+            'v50': np.median(v50),
+            'v95': np.median(v95),
+        }
+        return fluxes, vmaxs, vmins, fwhms, bhms, rhms, asymmetry, fmin, fmax, asymGronKo
 
     def absolute_flux(self, xmin=None, xmax=None, iters=1):
         # TODO Write sane defaults for xmin and xmax, should go via velocity.
@@ -231,7 +259,7 @@ class LyaGUI(SimpleFitGUI):
         self._selector.rectprops['facecolor'] = 'tab:red'
         self._extra_plots['redspan'] = self.ax.axvspan(
             xmin, xmax, color=self._colors['Red'], alpha=.5, zorder=0)
-        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax = \
+        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax, Agks = \
             self.measure_flux(xmin, xmax, iters=1000)
         self.summary_dict['Red'] = {
             'range': (xmin, xmax),
@@ -242,6 +270,7 @@ class LyaGUI(SimpleFitGUI):
             'blue_at_half_width': np.percentile(bhms, [2.5, 16, 50, 84, 97.5]),
             'red_at_half_width': np.percentile(rhms, [2.5, 16, 50, 84, 97.5]),
             'Asymmetry': np.percentile(A_qs, [2.5, 16, 50, 84, 97.5]),
+            'Asym_Gr_Ko': np.percentile(Agks, [2.5, 16, 50, 84, 97.5]),
         }
         print('Fitting red peak')
         print(xmin, xmax)
@@ -249,7 +278,7 @@ class LyaGUI(SimpleFitGUI):
     def fit_blue(self, xmin, xmax):
         self._extra_plots['bluespan'] = self.ax.axvspan(
             xmin, xmax, color=self._colors['Blue'], alpha=.5, zorder=0)
-        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax = \
+        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax, Agks = \
             self.measure_flux(xmin, xmax, iters=1000)
         self.summary_dict['Blue'] = {
             'range': (xmin, xmax),
@@ -264,7 +293,7 @@ class LyaGUI(SimpleFitGUI):
         return self.summary_dict['Blue']
 
     def fit_valley(self, xmin, xmax):
-        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax = \
+        flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax, Agks = \
             self.measure_flux(xmin, xmax, iters=1000)
         self._extra_plots['Valley'] = self.ax.axvspan(
             xmin, xmax, color=self._colors['Valley'], alpha=5.)
@@ -291,6 +320,10 @@ class LyaGUI(SimpleFitGUI):
     def save_summary(self):
         # TODO: Implement something.
         pass
+
+    # @property
+    # def _cenwave(self):
+    #     return 1215.67 * (1+self.z)
 
     @property
     def _wave_diffs(self):
@@ -323,7 +356,6 @@ v_red DONE
 v_blue DONE
 TODO: EW Full line
 
-
 with
 FWHM – FWHM of peak
 F – flux of peak
@@ -331,4 +363,3 @@ L – integrated flux of peak
 q – percentile
 v – peak position
 """
-

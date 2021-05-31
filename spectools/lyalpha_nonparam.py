@@ -139,7 +139,8 @@ class LyaGUI(SimpleFitGUI):
         self.ax.axvline(
             v_to_wl(self._velocities['Red']['v95'], self.refwave),
             ls='--', color='0.5')
-        self.ax.draw()
+        # self.ax.draw()
+        plt.draw()
             # plt.close(self.ax.figure)
 
     def _reset_clicked(self, event):

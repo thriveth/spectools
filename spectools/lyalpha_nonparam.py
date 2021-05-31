@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from .spectools import GalaxySpectrum, SimpleFitGUI, SpecView
 from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, deltawl_to_v
@@ -321,9 +322,86 @@ class LyaGUI(SimpleFitGUI):
         # TODO: Implement something.
         pass
 
-    # @property
-    # def _cenwave(self):
-    #     return 1215.67 * (1+self.z)
+    def save_summary_table(self, path="summarytable.ecsv"):
+        d = self.summary_dict
+        # Make sure absolute fliux is measured (TODO make better)
+        if not "AbsFlux" in d.keys():
+            d["AbsFlux"] = self.absolute_flux(iters=1000)
+        if not "EW_lua" in d.keys():
+            self.equivalent_width(iters=1000)
+        if "Red" in self._peaks:
+            asym = d['Red']['Asymmetry']
+            asyms = asym[2] - asym[1], asym[2], asym[3] - asym[2]   # A_red
+            asgk = d['Red']['Asym_Gr_Ko']
+            asgks = asgk[2] - asgk[1], asgk[2], asgk[3] - asgk[2]   # A_red
+            fwhr = d['Red']['fwhm']
+            fwhm_reds = fwhr[2] - fwhr[1], fwhr[2], fwhr[3] - fwhr[2] # FWHM_red
+            lr = d['Red']['flux']
+            l_red = lr[2] - lr[1], lr[2], lr[3] - lr[2]  # L_red
+            fr = d['Red']['fmax']
+            f_red = fr[2] - fr[1], fr[2], fr[3] - fr[2]  # F_red
+            vr = d['Red']['vpeak']
+            vpeak_red = vr[2] - vr[1], vr[2], vr[3] - vr[2]  # v_red
+        if "Blue" in self._peaks:
+            fwhb = d['Blue']['fwhm']
+            fwhm_blue = fwhb[2] - fwhb[1], fwhb[2], fwhb[3] - fwhb[2] # FWHM_blue
+            lb = d['Blue']['flux']
+            l_blue = lb[2] - lb[1], lb[2], lb[3] - lb[2]  # L_red
+            fb = d['Blue']['fmax']
+            f_blue = fb[2] - fb[1], fb[2], fb[3] - fb[2]  # F_red
+            vb = d['Blue']['vpeak']
+            vpeak_blue = vb[2] - vb[1], vb[2], vb[3] - vb[2]  # v_blue
+        if "Valley" in self._peaks:
+            vv = d['Valley']['vmin']
+            v_valley = vv[2] - vv[1], vv[2], vv[3] - vv[2]  # Maybe not? v_min
+            fv = d['Valley']['minflux']
+            f_valley = fv[2] - fv[1], fv[2], fv[3] - fv[2]  # F_valley
+        af = d['AbsFlux']
+        abs_flux = af[2] - af[1], af[2], af[3] - af[2]
+        ewl = d["EW_lya"]
+        EW_lya = ewl[2] - ewl[1], ewl[2], ewl[3] - ewl[2]
+        # Create interim output dictionary
+        outdict = {}
+        if "Red" in self._peaks:
+            tmp = {
+                'fwhm_red': fwhm_reds,
+                'f_red': f_red,
+                'l_red': l_red,
+                'A_red': asyms,
+                'A_GK': asgks,
+                'v_red': vpeak_red,
+            }
+            outdict.update(tmp)
+        if "Blue" in self._peaks:
+            tmp = {
+                'fwhm_blue': fwhm_blue,
+                'f_blue': f_blue,
+                'l_blue': l_blue,
+                'v_blue': vpeak_blue,
+            }
+            outdict.update(tmp)
+
+        if "Valley" in self._peaks:
+            tmp = {
+                'v_valley': v_valley,
+                'f_valley': f_valley,
+            }
+            outdict.update(tmp)
+        outdict.update(
+            {'AbsFlux': abs_flux, 'EW_Lya': EW_lya}
+        )
+        # Now make it a dataframe
+        outframe = pd.DataFrame.from_dict(outdict)
+        outframe.set_index(
+            pd.Index(['Low', 'Median', 'High'],
+                     name=self.galaxy_name),
+            inplace=True)
+        outframe = outframe.T
+        # Now make it a Table
+        outtable = Table.from_pandas(outframe.reset_index())
+        outtable.meta['identifier'] = self.galaxy_name
+        outtable.write(path, format='ascii.ecsv')
+        return outtable
 
     @property
     def _wave_diffs(self):
@@ -354,7 +432,7 @@ F_blue / F_red DONE
 A_red (e.g., (q_95 - q_50) / (q_50 - q_5)  DONE
 v_red DONE
 v_blue DONE
-TODO: EW Full line
+TODO: EW Full line DONE
 
 with
 FWHM – FWHM of peak

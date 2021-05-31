@@ -7,4 +7,5 @@ spectools/.ipynb_checkpoints
 spectools/*.ipynb
 
 # Sky lines - maybe make its own little repo?
-skylines
+# No they really don't take up that much space.
+# skylines

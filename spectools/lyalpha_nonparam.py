@@ -219,6 +219,12 @@ class LyaGUI(SimpleFitGUI):
         afs = []
         afarray = (self.interp - 1) * self._cont
         aferrar = (self.interr) * self._cont
+        ranges = [self.summary_dict[i]['range'] for i in self._peaks]
+        therange = np.array(ranges).flatten()
+        if xmin is None:
+            xmin = therange.min()
+        if xmax is None:
+            xmax = therange.max()
         if xmin:
             afarray[self.wave < xmin] = 0
         if xmax:

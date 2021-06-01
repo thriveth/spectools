@@ -376,7 +376,7 @@ class LyaGUI(SimpleFitGUI):
         EW_lya = ewl[2] - ewl[1], ewl[2], ewl[3] - ewl[2]
         # Create interim output dictionary
         outdict = {}
-        if "Red" in self._peaks:
+        if "Red" in self._peaks_active:
             tmp = {
                 'fwhm_red': fwhm_reds,
                 'f_red': f_red,
@@ -386,7 +386,7 @@ class LyaGUI(SimpleFitGUI):
                 'v_red': vpeak_red,
             }
             outdict.update(tmp)
-        if "Blue" in self._peaks:
+        if "Blue" in self._peaks_active:
             tmp = {
                 'fwhm_blue': fwhm_blue,
                 'f_blue': f_blue,
@@ -395,7 +395,7 @@ class LyaGUI(SimpleFitGUI):
             }
             outdict.update(tmp)
 
-        if "Valley" in self._peaks:
+        if "Valley" in self._peaks_active:
             tmp = {
                 'v_valley': v_valley,
                 'f_valley': f_valley,

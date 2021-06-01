@@ -156,6 +156,7 @@ class LyaGUI(SimpleFitGUI):
         self.rax.remove()
         self.rax = self.fig.add_axes([0.90, 0.25, 0.09, 0.2], frameon=False)
         self.rax.set_title('Current \ncomponent', size='x-small')
+        self._peak_on = np.array(self.check.get_status())
         rlabels = self._peaks[np.where(self.check.get_status())]
         self.radio = RadioButtons(self.rax, rlabels)
         plt.draw()
@@ -219,7 +220,7 @@ class LyaGUI(SimpleFitGUI):
         afs = []
         afarray = (self.interp - 1) * self._cont
         aferrar = (self.interr) * self._cont
-        ranges = [self.summary_dict[i]['range'] for i in self._peaks]
+        ranges = [self.summary_dict[i]['range'] for i in self._peaks_active]
         therange = np.array(ranges).flatten()
         if xmin is None:
             xmin = therange.min()
@@ -245,7 +246,7 @@ class LyaGUI(SimpleFitGUI):
     def equivalent_width(self, xmin=None, xmax=None, iters=1000):
         ews = []
         ewarray, ewerrar = (self.interp - 1), self.interr
-        ranges = [self.summary_dict[i]['range'] for i in self._peaks]
+        ranges = [self.summary_dict[i]['range'] for i in self._peaks_active]
         therange = np.array(ranges).flatten()
         if xmin is None:
             xmin = therange.min()
@@ -421,6 +422,10 @@ class LyaGUI(SimpleFitGUI):
         diffs = self.wave[1:] - self.wave[:-1]
         diffs = np.append(diffs, diffs[-1])
         return diffs
+
+    @property
+    def _peaks_active(self):
+        return self._peaks[self._peak_on]
 
     @property
     def refwave(self):

@@ -240,7 +240,7 @@ class LyaGUI(SimpleFitGUI):
         ews = []
         ewarray, ewerrar = (self.interp - 1), self.interr
         ranges = [self.summary_dict[i]['range'] for i in self._peaks]
-        therange = array(ranges).flatten()
+        therange = np.array(ranges).flatten()
         if xmin is None:
             xmin = therange.min()
         if xmax is None:

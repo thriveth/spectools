@@ -239,6 +239,12 @@ class LyaGUI(SimpleFitGUI):
     def equivalent_width(self, xmin=None, xmax=None, iters=1000):
         ews = []
         ewarray, ewerrar = (self.interp - 1), self.interr
+        ranges = [self.summary_dict[i]['range'] for i in self._peaks]
+        therange = array(ranges).flatten()
+        if xmin is None:
+            xmin = therange.min()
+        if xmax is None:
+            xmax = therange.max()
         if xmin:
             ewarray[self.wave < xmin] = 0
         if xmax:

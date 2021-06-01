@@ -365,7 +365,7 @@ class LyaGUI(SimpleFitGUI):
             f_blue = fb[2] - fb[1], fb[2], fb[3] - fb[2]  # F_red
             vb = d['Blue']['vpeak']
             vpeak_blue = vb[2] - vb[1], vb[2], vb[3] - vb[2]  # v_blue
-        if "Valley" in self._peaks_activea:
+        if "Valley" in self._peaks_active:
             vv = d['Valley']['vmin']
             v_valley = vv[2] - vv[1], vv[2], vv[3] - vv[2]  # Maybe not? v_min
             fv = d['Valley']['minflux']

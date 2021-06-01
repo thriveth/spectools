@@ -343,7 +343,7 @@ class LyaGUI(SimpleFitGUI):
             d["AbsFlux"] = self.absolute_flux(iters=1000)
         if not "EW_lua" in d.keys():
             self.equivalent_width(iters=1000)
-        if "Red" in self._peaks:
+        if "Red" in self._peaks_active:
             asym = d['Red']['Asymmetry']
             asyms = asym[2] - asym[1], asym[2], asym[3] - asym[2]   # A_red
             asgk = d['Red']['Asym_Gr_Ko']
@@ -356,7 +356,7 @@ class LyaGUI(SimpleFitGUI):
             f_red = fr[2] - fr[1], fr[2], fr[3] - fr[2]  # F_red
             vr = d['Red']['vpeak']
             vpeak_red = vr[2] - vr[1], vr[2], vr[3] - vr[2]  # v_red
-        if "Blue" in self._peaks:
+        if "Blue" in self._peaks_active:
             fwhb = d['Blue']['fwhm']
             fwhm_blue = fwhb[2] - fwhb[1], fwhb[2], fwhb[3] - fwhb[2] # FWHM_blue
             lb = d['Blue']['flux']
@@ -365,7 +365,7 @@ class LyaGUI(SimpleFitGUI):
             f_blue = fb[2] - fb[1], fb[2], fb[3] - fb[2]  # F_red
             vb = d['Blue']['vpeak']
             vpeak_blue = vb[2] - vb[1], vb[2], vb[3] - vb[2]  # v_blue
-        if "Valley" in self._peaks:
+        if "Valley" in self._peaks_activea:
             vv = d['Valley']['vmin']
             v_valley = vv[2] - vv[1], vv[2], vv[3] - vv[2]  # Maybe not? v_min
             fv = d['Valley']['minflux']

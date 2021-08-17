@@ -8,6 +8,11 @@ import numpy as np
 from astropy.table import Table
 import pandas as pd
 import matplotlib.pyplot as plt
+import pkg_resources
+
+
+DATA_PATH = pkg_resources.resource_filename('spectools', 'data/')
+sky_data = pkg_resources.resource_filename('spectools', 'data/UVES_sky_tables/')
 
 _wave_coverage_dict = {
     '346':  [3142.0, 3800.0],
@@ -48,7 +53,8 @@ class UvesSkyAtlas(object):
         partframe = self.partframe
         for a in partframe.index:
             t = Table.read(
-                './skylines/UVES_sky_tables/gident_{}.dat'.format(a),
+                sky_data+'gident_{}.dat'.format(a),
+                # './skylines/UVES_sky_tables/gident_{}.dat'.format(a),
                 format='ascii.fixed_width_two_line'
             )
             self.line_collections[a] = t

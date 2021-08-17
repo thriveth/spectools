@@ -17,7 +17,8 @@ import lmfit as lm
 from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum
 from .helper_functions import vacuum_to_air, equivalent_width
 from .linelists import lislines, wlsdict, MWlines
-import skylines.uves_sky_atlas as usa
+# import .skylines.uves_sky_atlas as usa
+from .skylines import uves_sky_atlas as usa
 
 class BaseGUI(object):
     def __init__(self):
@@ -439,8 +440,6 @@ class Transition(object):
 
 
 
-
-
 class SpecView(object):
     """ Docstring goes here.
     """
@@ -455,6 +454,18 @@ class SpecView(object):
     _sky_flux_limit = 1  # Sane default
 
     def __init__(self, galaxy, ax=None, data=None, label='Data'):
+            # Take over keys that Matplotlib usually uses.
+        # Will be handed back in a good shape later on.
+        try:  # A bit hacky but I don't want to give each its own try statement
+            plt.rcParams["keymap.save"].remove("s")
+            plt.rcParams["keymap.home"].remove("r")
+            plt.rcParams["keymap.pan"].remove("p")
+            plt.rcParams["keymap.yscale"].remove("l")
+            plt.rcParams["keymap.xscale"].remove("k")
+            plt.rcParams["keymap.back"].remove("left")
+            plt.rcParams["keymap.forward"].remove("right")
+        except ValueError:
+            pass
         self.data = galaxy.datatable
         self.galaxy = galaxy
         self.ref_wl = None
@@ -472,9 +483,47 @@ class SpecView(object):
         ax.set_ylabel("Flux [{}]".format(self.data['flux'].unit))
         ax.set_xlabel("Observed $\lambda$ [{}]".format(self.data['wave'].unit))
         self._smooth_width = 1  # No smoothing by default
+        # Hand the axis over to the parent object
         self.ax = ax
+        # Do what I say when certain keys are pressed and the figure is closed.
+        self.ax.figure.canvas.mpl_connect('key_press_event', self.on_press)
+        self.ax.figure.canvas.mpl_connect('close_event', self.on_close)
+
+    # Keyboard controls
+    def on_press(self, event):
+        print("Pressed: ", event.key)
+        if event.key == "r":
+            print("It was an r!")
+            self.toggle_restframe_xaxis()
+        # Smoothing
+        if event.key == "down":  # Smooth less
+            dec = self._smooth_width - 1 if self._smooth_width > 1 else self._smooth_width
+            print("Smoothing kernel width: ", self._smooth_width)
+            self.smooth_width(dec)
+        if event.key == "up":  # Smooth less
+            self.smooth_width(self._smooth_width+1)
+            print("Smoothing kernel width: ", self._smooth_width)
+        # Toggle error spectrum plot
+        if event.key == "e":
+            self.toggle_errors()
+        # Toggle sky lines
+        if event.key == "l":
+            self.toggle_sky_lines()
+        # Refresh plot
+        plt.draw()
+
+    def on_close(self, event):
+        plt.rcParams["keymap.save"].append("s")
+        plt.rcParams["keymap.home"].append("r")
+        plt.rcParams["keymap.pan"].append("p")
+        plt.rcParams["keymap.yscale"].append("l")
+        plt.rcParams["keymap.xscale"].append("k")
+        plt.rcParams["keymap.back"].append("left")
+        plt.rcParams["keymap.forward"].append("right")
+        print("Restored original keymap.")
 
     def toggle_sky_lines(self, min_flux=1):
+        "Make sky lines go blip, whoosh!"
         if min_flux != self._sky_flux_limit:  # Rebuild if new value passed
             self._sky_flux_limit = min_flux
             self.skyatlas = None
@@ -529,9 +578,12 @@ class SpecView(object):
 
     def toggle_restframe_xaxis(self):
         if self.altaxis_type == 'restframe':
+            print("Debug case 1")
             self.altx.remove()
+            print("Debug: altx removed under case 1")
             self.altaxis_type = None
         else:
+            print("Debug case 2")
             try:
                 self.altx.remove()
             except:

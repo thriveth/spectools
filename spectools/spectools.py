@@ -439,7 +439,6 @@ class Transition(object):
         self.wave = np.array(self.wave) * self.waveunit
 
 
-
 class SpecView(object):
     """ Docstring goes here.
     """
@@ -454,7 +453,7 @@ class SpecView(object):
     _sky_flux_limit = 1  # Sane default
 
     def __init__(self, galaxy, ax=None, data=None, label='Data'):
-            # Take over keys that Matplotlib usually uses.
+        # Take over keys that Matplotlib usually uses.
         # Will be handed back in a good shape later on.
         try:  # A bit hacky but I don't want to give each its own try statement
             plt.rcParams["keymap.save"].remove("s")
@@ -482,6 +481,7 @@ class SpecView(object):
         ax.axhline(0, ls='--', color='black')
         ax.set_ylabel("Flux [{}]".format(self.data['flux'].unit))
         ax.set_xlabel("Observed $\lambda$ [{}]".format(self.data['wave'].unit))
+        ax.annotate(galaxy.objname, (0.02, 0.9), ha='left')
         self._smooth_width = 1  # No smoothing by default
         # Hand the axis over to the parent object
         self.ax = ax

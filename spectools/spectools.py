@@ -481,7 +481,8 @@ class SpecView(object):
         ax.axhline(0, ls='--', color='black')
         ax.set_ylabel("Flux [{}]".format(self.data['flux'].unit))
         ax.set_xlabel("Observed $\lambda$ [{}]".format(self.data['wave'].unit))
-        ax.annotate(galaxy.objname, (0.02, 0.9), ha='left')
+        ax.annotate(
+            galaxy.objname, (0.02, 0.9), ha='left', xycoords='axes fraction')
         self._smooth_width = 1  # No smoothing by default
         # Hand the axis over to the parent object
         self.ax = ax

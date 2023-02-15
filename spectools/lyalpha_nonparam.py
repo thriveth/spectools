@@ -312,7 +312,7 @@ class LyaGUI(SimpleFitGUI):
         flux, vpeak, vmin, fwhm, bhms, rhms, A_qs, fmin, fmax, Agks = \
             self.measure_flux(xmin, xmax, iters=1000)
         self._extra_plots['Valley'] = self.ax.axvspan(
-            xmin, xmax, color=self._colors['Valley'], alpha=5.)
+            xmin, xmax, color=self._colors['Valley'], alpha=.5)
         self.summary_dict['Valley'] = {
             'range': (xmin, xmax),
             'minflux': np.percentile(fmin, [2.5, 16, 50, 84, 97.5]),

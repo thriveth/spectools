@@ -149,6 +149,7 @@ class LyaGUI(SimpleFitGUI):
         print('You presset RESET and are now back to scratch.')
 
     def _radio_clicked(self, event):
+        print("Radio button clicked", self.event, self._current_peak)  # Debug
         self._selector.rectprops['facecolor'] = self._colors[event]
 
     def _check_clicked(self, event):

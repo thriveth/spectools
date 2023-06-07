@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-# encoding: utf-8
-
+#! /usr/bin/env python
+# coding: utf-8
 import os
 import numpy as np
 import scipy as sp
 import scipy.constants as con
-#import astropy.constants as co
+# import astropy.constants as co
 from astropy.constants import c
 import astropy.units as u
 import pandas as pd
@@ -15,10 +14,13 @@ import matplotlib.pyplot as plt
 #            Convenience- and helper functions
 # ============================================================================
 
+
+
 def hello_there(text='IPython process'):
     '''Lets me know when something is done'''
     os.system('notify-send -i ipython "{} done!"'.format(text.capitalize()))
-    os.system('play --no-show-progress --null --channels 1 synth {} sine {}'.format(.6, 550))
+    os.system('play --no-show-progress --null --channels 1 synth {} sine {}'
+              .format(.6, 550))
 
 
 def _extract_1d(data, errs, LineLo, LineUp):
@@ -101,12 +103,14 @@ def freq_to_wl(freq):
         freq *= u.Hz
     return (c / freq).to(u.Angstrom)
 
+
 def wl_to_freq(wave):
     """ Converts EM wavelength to frequency, assuming vacuum"""
     if type(wave) is not u.Quantity:
         print("Wavelength unit assumed to be Ångström")
         wave *= u.Angstrom
     return (c / wave).to(u.Hz)
+
 
 def air_to_vacuum(airwl, nouvconv=True):
     """
@@ -196,7 +200,8 @@ def transition_from_existing(model, exist_trans, new_trans,
     try:
         exist_trans in model.index.levels[0]
     except NameError:
-        print("The transition {} was not found in the model".format(exist_trans))
+        print("The transition {} was not found in the model"
+              .format(exist_trans))
 
     # Copy the original transition model with only two lower levels of indexing
     # (omitting the one containing the transition name)
@@ -241,9 +246,7 @@ def transition_from_existing(model, exist_trans, new_trans,
     tmp['Sigma'] = wlwidth.values
     tmp.Sigma = np.sqrt(tmp.Sigma**2 - LSF[0]**2 + LSF[1]**2)  # "real" sigma.
     tmp.Sigma[tmp.Sigma < 0.1] = 0.1
-    # tmp.Sigma = np.sqrt(tmp.Sigma**2 + LSF[1]**2)  # XXX Should this not be plus!?
-
-
+    # tmp.Sigma = np.sqrt(tmp.Sigma**2 + LSF[1]**2)  # Should this be plus!?
     # Fit ranges should be --cleared-- copied in velspace:
     old_lincen = model.loc[exist_trans]['Line center'][0]
     if 'Fitranges' in tmp.columns:
@@ -256,7 +259,8 @@ def transition_from_existing(model, exist_trans, new_trans,
         model = model.drop(new_trans, level=0)
     tmp = model.append(tmp)
     tmp = tmp.sort_index()
-    print('Model of transition {} successfully created \n with {} as template'\
+    print(
+        'Model of transition {} successfully created \n with {} as template'
         .format(new_trans, exist_trans))
     return tmp
 
@@ -292,7 +296,7 @@ def select_ranges(wave, data):
         idx = np.where(mask is True)
         fitwave = wave[idx]
         fitdata = data[idx]
-        #fiterrs = errs[idx]
+        # fiterrs = errs[idx]
         plt.close(fig)
         return
 
@@ -349,7 +353,6 @@ def fit_with_sherpa(model, data, trans, rows,
     # parameters. On the downside, it is not generally useable. I want things
     # to be as general as possible. But not at any price. Cost/benifit analysis
     # not yet conclusive.
-
     # First of all, check if Sherpa is even installed.
     try:
         import sherpa.astro.ui as ai
@@ -433,7 +436,7 @@ def flux(model, lines=[]):
         uncert = True
     except ImportError:
         S = ''.join(["Could not import module 'uncertainties', \n",
-                      "Uncertainties not computed."])
+                     "Uncertainties not computed."])
         raise ImportWarning(S)
     if type(lines) is not list:
         raise TypeError("Keyword argument 'lines' must be list-like.")
@@ -501,17 +504,18 @@ def EW_from_lmfit(model, wave, stddev=None, which='emit', MC=False):
             data = data + np.random.normal(scale=model.weights**(-0.5))
             if which == 'emit':
                 cont = comps['linear'] + model.eval_components(
-                    abs_center = abscen + np.random.normal(scale=abscenerr),
-                    abs_amplitude = absamp + np.random.normal(scale=absamperr),
-                    abs_sigma = abssig + np.random.normal(scale=abssigerr)
+                    abs_center=abscen + np.random.normal(scale=abscenerr),
+                    abs_amplitude=absamp + np.random.normal(scale=absamperr),
+                    abs_sigma=abssig + np.random.normal(scale=abssigerr)
                 )['abs_']
         EW[i] = equivalent_width(wave, data, cont, wlstep=wave.ptp()/len(wave))
     EW = pd.DataFrame.from_dict(EW)
     return EW
 
 
-def component_mean( spectrum, datacols=['Flux', 'Flux_stddev', 'Row'],
-                   groupby='Identifier', mode='total'):
+def component_mean(
+        spectrum, datacols=['Flux', 'Flux_stddev', 'Row'],
+        groupby='Identifier', mode='total'):
     ''' Takes a weighted average for all components in a given grism model.
     Thge returned DataFrame contains the specified column plus other useful
     columns like the averaged "Rown Number" (which is now a float).
@@ -533,19 +537,19 @@ def component_mean( spectrum, datacols=['Flux', 'Flux_stddev', 'Row'],
     pandas.DataFrame
     '''
     import uncertainties.unumpy as unp
-    modl = spectrum.model.copy().drop('Contin', level='Component')#[datacols]
+    modl = spectrum.model.copy().drop('Contin', level='Component')
     modl = modl.join(spectrum.flux)
     modl['Flux'] = unp.uarray(modl.Flux, modl.Flux_stddev)
     modl['Row'] = modl.index.get_level_values('Rows')\
         .map(lambda S: int(S.split('-')[0])).astype(np.float64)
     modl = modl[datacols+[groupby]]
-    #modl = modl[['Flux']+[groupby]]
+    # modl = modl[['Flux']+[groupby]]
     modl = modl.set_index(groupby, append=True)
     # print modl.columns
     grouped = modl.groupby(level=['Transition', groupby])
-    out = grouped.apply(flux_weighted_average, operate_on=datacols)#.aggregate(flux_weighted_average)
+    out = grouped.apply(flux_weighted_average, operate_on=datacols)
     out['Identifier'] = out.index.get_level_values('Identifier')
-    return out  # grouped  #out  # grouped  #modl
+    return out
 
 
 def flux_weighted_average(grouped, operate_on=['Flux']):
@@ -558,12 +562,14 @@ def flux_weighted_average(grouped, operate_on=['Flux']):
         grouped[col] *= weights / weights.sum()
     return grouped.sum(0)
 
+
 # =============================================================================
 #     Import atom transition list taken from galaxy_lines.dat of Astropysics
 #        fame. This is done at load time to be available module-wide, instead
 #        of  per-instance (is there a better way to do that?)
 #        Also, more extensive list is needed!
 # =============================================================================
+
 
 def load_lines_series():
     """ Loads the transitions list into a pandas.Series object. """
@@ -599,10 +605,13 @@ def measure_fwhm(data, wave=None, cont=None, xtype='vel'):
     return fwhm
 
 
-def MC_it(function, data, errs, iters=1000, **kwargs):
-    """ Max data dimensions: 2
+def MC_it(function, data, errs, iters=999, **kwargs):
+    """ Monte carlo sample the operation of a callable.
+
+    Max data dimensions: 2. Perhaps this will be generalized more later. Who knows. 
     """
-    for j in range(iters):
+    import tqdm.auto as tqdm
+    for j in tqdm(range(iters)):
         perturb = [np.random.normal(scale=errs.flatten()[i])
                    for i in range(len(errs.flatten()))]
         pertarr = np.array(perturb).reshape(errs.shape)

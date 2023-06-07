@@ -19,10 +19,13 @@ class DynVelGUI(SimpleMaskGUI):
     """
     plot_added = None
     iterations = 100
+
     def _onselect(self, event):
         pass
+
     def _on_clr_button(self, event):
         pass
+
     def _on_ok_button(self, event):
         pass
 
@@ -67,6 +70,7 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll',
     diff = np.diff(wave)
     diff = np.append(diff, diff[-1])
     diffs = diff.repeat(iterations).reshape(-1, iterations).T
+    velstep = diffs.mean()
     waves = wave.repeat(iterations).reshape(-1, iterations).T
     datas = data.repeat(iterations).reshape(-1, iterations).T - 1
     errss = errs.repeat(iterations).reshape(-1, iterations).T
@@ -165,6 +169,7 @@ def dynvel(wave, data, errs, iterations=100, kind='absorb', fwhm_mode='ll',
         'perturbed': pertdata,
         'cumsum': accu,
         'Velocity': wave,
+        "Velocity step": velstep,
         'fwhm': fwhmout,
         'LLE': lleout,
     }
@@ -186,7 +191,7 @@ def dynvelplot(indict, ax=None, plotiters=True, color1='gray', color2='C0', ):
 
         for i in np.arange(iterations):
             ax2.plot(vels, indict['cumsum'][i, :], color=color1, ls='-', lw=0.1, alpha=.2)
-            #ax.plot(vels, 1-indict['perturbed'][i, :], color=color2, ls='-', lw=0.1, alpha=.2)
+            # ax.plot(vels, 1-indict['perturbed'][i, :], color=color2, ls='-', lw=0.1, alpha=.2)
     accuplot = ax2.plot(vels, indict['cumsum'][0, :], '-', color='m', lw=1.8, label='Accumulated absorption', )
     fluxplot = ax.plot(vels, 1-indict['perturbed'][0, :], 'c-', lw=1.8, label='Line flux', drawstyle='steps-mid')
     flerrs = ax.fill_between(
@@ -255,12 +260,16 @@ def dynvelplot(indict, ax=None, plotiters=True, color1='gray', color2='C0', ):
     return fig, ax, ax2
 
 
-def pm_string(percentiles):
+def pm_string(percentiles, minerr=0):
     """ Assumes percentiles are 2.5th, 16, 50, 84, 97.5th
     """
+    # print("minerr ", minerr)
     val, upper, lower = percentiles[2], percentiles[3], percentiles[1]
-    plusval = upper - val
-    minusval = val - lower
+    # print(val, upper, lower, "VUL")
+    plusval = max(abs(upper - val), minerr)
+    minusval = max(abs(val - lower), minerr)
+    # print(plusval, minusval, " PMvals")
+    # minusval = val - lower
     S = "".join(
         [
             "${:.0f}".format(val),
@@ -275,32 +284,39 @@ def pm_string(percentiles):
 def pprint_dynvel(indict, errors='std'):
     """ Errors can be 'std' or 'pm'
     """
+    velstep = indict['Velocity step']/2
+    # print(velstep, " lalala")
     if errors == 'std':
+        s1err = max(indict['v5pct']['stddev'], velstep)
         s1 = ''.join( [r"$v_{5\%} =", "{:.0f} \pm {:.0f}$ km/s"
-                       .format(indict['v5pct']['ml'], indict['v5pct']['stddev']),])
+                       .format(indict['v5pct']['ml'], s1err),])
+        s2err = max(indict['v95']['stddev'], velstep)
         s2 = ''.join([r"$v_{95\%} =", "{:.0f} \pm {:.0f}$ km/s"
-                      .format(indict['v95']['ml'], indict['v95']['stddev']),])
+                      .format(indict['v95']['ml'], s2err),])
+        s3err = max(indict['vint']['stddev'], velstep)
         s3 = ''.join([r"$v_{\mathrm{int}} =", "{:.0f} \pm {:.0f}$ km/s"
-                      .format(indict['vint']['ml'], indict['vint']['stddev']),])
+                      .format(indict['vint']['ml'], s3err),])
+        s4err = max(indict['vmin']['stddev'], velstep)
         s4 = ''.join([r"$v_{min} =", "{:.0f} \pm {:.0f}$ km/s"
-                      .format(indict['vmin']['ml'], indict['vmin']['stddev']),])
+                      .format(indict['vmin']['ml'], s4err),])
+        s5err = max(indict['fwhm']['stddev'], velstep)
         s5 = ''.join(["FWHM = {:.0f} $\pm$ {:.0f}"
-                      .format(indict['fwhm']['ml'], indict['fwhm']['stddev']),])
+                      .format(indict['fwhm']['ml'], s5err),])
     elif errors == 'pm':
         s1 = ''.join([r"$v_{5\%} =$",
-                      pm_string(indict['v5pct']['percentiles']),
+                      pm_string(indict['v5pct']['percentiles'], minerr=velstep),
                       "km/s"])
         s2 = ''.join([r"$v_{95\%} =$",
-                      pm_string(indict['v95']['percentiles']),
+                      pm_string(indict['v95']['percentiles'], minerr=velstep),
                       "km/s"])
         s3 = ''.join([r"$v_{\mathrm{int}} =$",
-                      pm_string(indict['vint']['percentiles']),
+                      pm_string(indict['vint']['percentiles'], minerr=velstep),
                       "km/s"])
         s4 = ''.join([r"$v_{min} =$",
-                      pm_string(indict['vmin']['percentiles']),
+                      pm_string(indict['vmin']['percentiles'], minerr=velstep),
                       "km/s"])
         s5 = ''.join([r"FWHM $=$",
-                      pm_string(indict['fwhm']['percentiles']),
+                      pm_string(indict['fwhm']['percentiles'], minerr=velstep),
                       "km/s"])
     return "\n".join([s1, s3, s4, s2, s5])
 

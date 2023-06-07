@@ -8,19 +8,22 @@ from astropy.table import Table
 import pkg_resources
 
 DATA_PATH = pkg_resources.resource_filename('spectools', 'data/')
-bpt_data = pkg_resources.resource_filename('spectools', 'data/bpt_sdss_dr7.txt')
+bpt_data = pkg_resources.resource_filename(
+        'spectools', 'data/bpt_sdss_dr7.txt'
+        )
 
 
 def load_sdssdata():
     sdssdata = Table.read(bpt_data, format='ascii')
     return sdssdata
 
+
 def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
     'Diagnostic can be OI or OIII'
     if not ax:
         fig, ax = plt.subplots(1)
     clouddata = load_sdssdata()
-    xcloud = 'OI/Ha' if diagnostic=='OI' else 'NII/Ha'
+    xcloud = 'OI/Ha' if diagnostic == 'OI' else 'NII/Ha'
     ycloud = 'OIII/Hb'
     sdsscloud = ax.hist2d(
         clouddata['log '+xcloud],
@@ -37,6 +40,7 @@ def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
         ax = draw_O13_diags(ax)
     return ax
 
+
 def abund_sequence(z):
     """ Computes the Star formation abundance tracks of Kewley+ 2013 (eq. 5),
     for use in a N2/Ha vs. O3/Hb BPT diagram, as a function of redshift.
@@ -48,10 +52,13 @@ def abund_sequence(z):
     ys = 1.1 + 0.03 * z + 0.61/denom
     return xs, ys
 
+
 def draw_O123_diags(ax):
-    ax.plot(np.linspace(-3, 0, 100), -1.70 * np.linspace(-3, 0, 100) - 2.163, 'k-')
+    ax.plot(
+        np.linspace(-3, 0, 100), -1.70 * np.linspace(-3, 0, 100) - 2.163, 'k-')
     ax.plot(np.linspace(-1.1, 0, 100), np.linspace(-1.1, 0, 100) + .7, 'k-')
     return ax
+
 
 def draw_N2_O3_diags(ax):
     ax.plot(
@@ -66,6 +73,7 @@ def draw_N2_O3_diags(ax):
     )  # Ke01
     return ax
 
+
 def draw_O13_diags(ax):
     ax.plot(
         np.linspace(-1.13, -.5, 200),
@@ -74,5 +82,5 @@ def draw_O13_diags(ax):
     ax.plot(
         np.linspace(-4, -0.89, 200),
         0.73 / (np.linspace(-4, -0.89, 200) + 0.59) + 1.33,
-        'k-', zorder=1) # Ke06
+        'k-', zorder=1)  # Ke06
     return ax

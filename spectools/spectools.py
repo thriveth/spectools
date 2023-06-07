@@ -18,7 +18,7 @@ from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum
 from .helper_functions import vacuum_to_air, equivalent_width
 from .linelists import lislines, wlsdict, MWlines
 # import .skylines.uves_sky_atlas as usa
-from .skylines import uves_sky_atlas as usa
+from spectools.skylines import uves_sky_atlas as usa
 
 class BaseGUI(object):
     def __init__(self):
@@ -447,10 +447,12 @@ class SpecView(object):
     altaxis_type = None
     skyatlas = None
     skylines_visible = False
+    ref_wl = None
     _metal_absorption = None
     _absorption_visible = False
     _sky_lines = None
     _sky_flux_limit = 1  # Sane default
+    _smooth_width = 1  # No smoothing by default
 
     def __init__(self, galaxy, ax=None, data=None, label='Data'):
         # Take over keys that Matplotlib usually uses.
@@ -467,7 +469,7 @@ class SpecView(object):
             pass
         self.data = galaxy.datatable
         self.galaxy = galaxy
-        self.ref_wl = None
+        # self.ref_wl = None
         if ax is None:
             fig, ax = plt.subplots(1)
         self.dataplot = ax.plot(
@@ -483,7 +485,7 @@ class SpecView(object):
         ax.set_xlabel("Observed $\lambda$ [{}]".format(self.data['wave'].unit))
         ax.annotate(
             galaxy.objname, (0.02, 0.9), ha='left', xycoords='axes fraction')
-        self._smooth_width = 1  # No smoothing by default
+        # self._smooth_width = 1  # No smoothing by default
         # Hand the axis over to the parent object
         self.ax = ax
         # Do what I say when certain keys are pressed and the figure is closed.
@@ -497,18 +499,18 @@ class SpecView(object):
             print("It was an r!")
             self.toggle_restframe_xaxis()
         # Smoothing
-        if event.key == "down":  # Smooth less
+        if event.key in ["j", "down"]:  # Smooth less
             dec = self._smooth_width - 1 if self._smooth_width > 1 else self._smooth_width
             print("Smoothing kernel width: ", self._smooth_width)
             self.smooth_width(dec)
-        if event.key == "up":  # Smooth less
+        if event.key in ["k", "up"]:  # Smooth less
             self.smooth_width(self._smooth_width+1)
             print("Smoothing kernel width: ", self._smooth_width)
         # Toggle error spectrum plot
         if event.key == "e":
             self.toggle_errors()
         # Toggle sky lines
-        if event.key == "l":
+        if event.key == "s":
             self.toggle_sky_lines()
         # Refresh plot
         plt.draw()

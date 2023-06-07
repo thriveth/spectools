@@ -8,6 +8,11 @@ setup(
     author='T. Emil Rivera-Thorsen',
     author_email='trive@astro.su.se',
     packages=['spectools'],
-    package_data={'spectools':['data/*.csv', 'data/*.ecsv', 'data/*.txt', 'data/UVES_sky_tables/*.dat']},
+    package_data={
+        'spectools':
+            ['data/*.csv', 'data/*.ecsv', 'data/*.txt',
+             'data/UVES_sky_tables/*.dat'
+             ]
+            },
     license='GPL3',
 )

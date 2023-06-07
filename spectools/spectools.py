@@ -17,7 +17,7 @@ import lmfit as lm
 from .helper_functions import wl_to_v, v_to_wl, v_to_deltawl, air_to_vacuum
 from .helper_functions import vacuum_to_air, equivalent_width
 from .linelists import lislines, wlsdict, MWlines
-import .skylines.uves_sky_atlas as usa
+import spectools.skylines.uves_sky_atlas as usa
 # from spectools.skylines import uves_sky_atlas as usa
 
 class BaseGUI(object):

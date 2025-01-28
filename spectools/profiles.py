@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import scipy as sp
+import numpy as np
 
 def lorentz(x, pos, hwhm, ampl):
     """ Lorentz-Cauchy function expressed in terms of x0, gamma and height.
@@ -44,7 +45,7 @@ def gauss(x, pos, sig, ampl=1.):
     -------
     gau : numpy.ndarray
     """
-    gau = ampl * sp.e**(-0.5 * ((x - pos) / sig) ** 2)
+    gau = ampl * np.e**(-0.5 * ((x - pos) / sig) ** 2)
     return gau
 
 # Voigt, from Tepper Garcia 2006:
@@ -84,7 +85,7 @@ def voigt(x, pos, N, b, transition='Halpha'):
     cgse  = 4.8032e-10
     # Get transition info.
     f, g = _get_transition_info(transition)
-    a = x * g / (4 * sp.pi * b)
+    a = x * g / (4 * np.pi * b)
     Ca = cgse**2/(cgsme * cgsc)*np.sqrt(np.pi**3)/np.pi*f*pos/b
     vp = 1.
     #u = -c / b * ()

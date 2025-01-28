@@ -32,7 +32,7 @@ def plot_bpt(fluxes=None, diagnostic='OIII', ax=None):
         bins=50,
         norm=mpl.colors.LogNorm(),
         range=[[-2.5, 0.5], [-1.5, 1.5]],
-        vmax=100000,
+        # vmax=100000,
     )
     if diagnostic == 'OIII':
         ax = draw_N2_O3_diags(ax)

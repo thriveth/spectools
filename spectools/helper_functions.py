@@ -30,15 +30,15 @@ def _extract_1d(data, errs, LineLo, LineUp):
     fiterrs = errs[Lines[0]:Lines[1], :] ** 2  # Using variances
     Length = fitdata.shape[1]
     lowerl, upperl = (Length * .2, Length * .8)
-    profile = sp.absolute(fitdata[:, lowerl:upperl].sum(1))
+    profile = np.absolute(fitdata[:, lowerl:upperl].sum(1))
     pronorm = profile.sum()
     profile /= pronorm
     profile = profile.reshape(-1, 1)
-    weights = sp.tile(profile, fitdata.shape[1])
+    weights = np.tile(profile, fitdata.shape[1])
     data_weighted = fitdata * weights
     errs_weighted = fiterrs * weights ** 2
     data_1D = data_weighted.sum(0)
-    errs_1D = sp.sqrt(errs_weighted.sum(0))
+    errs_1D = np.sqrt(errs_weighted.sum(0))
     return data_1D, errs_1D
 
 
@@ -128,7 +128,7 @@ def air_to_vacuum(airwl, nouvconv=True):
     Adapted from idlutils airtovac.pro, based on the IAU standard
     for conversion in Morton (1991 Ap.J. Suppl. 77, 119)
     """
-    airwl = sp.array(airwl, copy=False, dtype=float, ndmin=1)
+    airwl = np.array(airwl, copy=False, dtype=float, ndmin=1)
     isscal = airwl.shape == tuple()
     if isscal:
         airwl = airwl.ravel()
@@ -276,7 +276,7 @@ def set_model(spec, dataframe, transition, centerwl=None):
     # Usage suggests this should be an instance method of Spectrum2D.
     spec.model = dataframe
     if centerwl is not None:
-        centerwl = sp.float64(centerwl)
+        centerwl = np.float64(centerwl)
         spec.Center = centerwl
     if 'Dummy' in spec.model.index.levels[0].to_series().sum():
         dataframe = dataframe.drop('Dummy', level=0)

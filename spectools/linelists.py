@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import scipy as sp
+import numpy as np
 
-COSlines = sp.array([['01', 'Si IV', '1122.49'],
+COSlines = np.array([['01', 'Si IV', '1122.49'],
                      ['02', 'Si II', '1190.42'],
                      ['03', 'Si II', '1193.29'],
                      ['04', 'Si III', '1206.50'],
@@ -15,7 +16,7 @@ COSlines = sp.array([['01', 'Si IV', '1122.49'],
                      ['10', 'Si IV', '1402.77'],
                      ['11', 'Si II', '1526.72']])
 
-SDSSlines = sp.array(  # Air wavelengths
+SDSSlines = np.array(  # Air wavelengths
     [
         ['01', '_Hdelta', 4102.892],
         ['02', '_Hgamma', 4341.684],
